@@ -1,0 +1,270 @@
+/* Product Listing Styles */
+.product-listing-container {
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+.product-listing-content {
+  padding-top: 20px;
+  padding-bottom: 40px;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+.breadcrumb a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb span {
+  color: #666;
+}
+
+/* Category Title */
+.category-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Layout */
+.product-listing-layout {
+  display: flex;
+  gap: 20px;
+}
+
+/* Filter Sidebar */
+.filter-sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.filter-heading {
+  background-color: #f0f0f0;
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-heading h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.filter-group {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.filter-group h3 {
+  font-size: 14px;
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+
+.filter-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.filter-list li {
+  margin-bottom: 8px;
+}
+
+.filter-list label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.filter-list input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+/* Product Content */
+.product-content {
+  flex: 1;
+}
+
+/* Sorting Options */
+.sorting-options {
+  background-color: #f9f9f9;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sorting-options select {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  outline: none;
+}
+
+/* Product Grid */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+/* Product Card */
+.product-card {
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.discount-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #e63312;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+.product-image {
+  padding: 15px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.product-info {
+  padding: 15px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.product-name {
+  font-size: 14px;
+  margin: 0 0 10px;
+  line-height: 1.4;
+  height: 40px;
+  overflow: hidden;
+}
+
+.product-name a {
+  color: #333;
+  text-decoration: none;
+}
+
+.product-name a:hover {
+  color: #e63312;
+}
+
+.product-specs {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.product-price {
+  margin-bottom: 10px;
+}
+
+.current-price {
+  font-weight: 700;
+  font-size: 18px;
+  color: #e63312;
+}
+
+.original-price {
+  font-size: 14px;
+  color: #999;
+  text-decoration: line-through;
+  margin-top: 3px;
+}
+
+.product-savings {
+  font-size: 12px;
+  margin-bottom: 12px;
+  color: #666;
+}
+
+.saving-amount {
+  font-weight: 700;
+  color: #e63312;
+}
+
+.product-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-buy-now, .btn-details {
+  display: block;
+  text-align: center;
+  padding: 8px 0;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-buy-now {
+  background-color: #e63312;
+  color: white;
+}
+
+.btn-details {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.btn-buy-now:hover {
+  background-color: #d62000;
+}
+
+.btn-details:hover {
+  background-color: #e6e6e6;
+}
+
+/* Loading State */
+.loading {
+  padding: 30px;
+  text-align: center;
+  color: #777;
+}
