@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import NavBar from '../components/NavBar';
+import cartService from '../services/cartService';
+import apiService from '../services/apiService';
 import '../assets/checkout.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -18,12 +20,16 @@ const Checkout = () => {
   });
 
   useEffect(() => {
-    // Check if product was passed via location state
+    // Check if products were passed via location state
     if (location.state && location.state.product) {
+      // Single product from "Buy Now"
       setCart([location.state.product]);
+    } else if (location.state && location.state.cartItems) {
+      // Multiple products from Cart
+      setCart(location.state.cartItems);
     } else {
-      // You could also load cart from localStorage or context
-      const savedCart = JSON.parse(localStorage.getItem('cart')) || [];
+      // Load cart from cartService
+      const savedCart = cartService.getCart();
       setCart(savedCart);
     }
   }, [location.state]);
@@ -46,18 +52,46 @@ const Checkout = () => {
   const handleRemoveItem = (id) => {
     const updatedCart = cart.filter(item => item.id !== id);
     setCart(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    
+    // Also remove from cartService if this was from cart
+    if (!location.state?.product) {
+      cartService.removeFromCart(id);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Process the order (in a real app, send to backend)
-    console.log('Order submitted:', { formData, items: cart });
-    
-    // Clear cart and redirect to success page
-    localStorage.removeItem('cart');
-    alert('Đặt hàng thành công! Cảm ơn quý khách.');
-    // You could redirect to a success page here
+    try {
+      // Chuẩn bị dữ liệu đơn hàng
+      const orderItems = cart.map(item => ({
+        itemType: item.category === 'Laptop' ? 'laptop' : 'printer',
+        itemId: item.id,
+        itemName: item.name,
+        quantity: item.quantity || 1,
+        unitPrice: parseFloat(item.discountPrice?.replace(/[^0-9]/g, '')) || parseFloat(item.price?.replace(/[^0-9]/g, '')) || 0,
+        totalPrice: (parseFloat(item.discountPrice?.replace(/[^0-9]/g, '')) || parseFloat(item.price?.replace(/[^0-9]/g, '')) || 0) * (item.quantity || 1)
+      }));
+      const orderData = {
+        customerName: formData.fullName,
+        customerPhoneNumber: formData.phone,
+        customerEmail: formData.email,
+        customerAddress: formData.address,
+        billingMethod: formData.paymentMethod,
+        note: formData.content,
+        type: 'product',
+        orderItems,
+        finalPrice: calculateTotal()
+      };
+      // Gửi đơn hàng lên backend
+      await apiService.post('/orders', orderData);
+      // Clear cart và báo thành công
+      localStorage.removeItem('cart');
+      alert('Đặt hàng thành công! Cảm ơn quý khách.');
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Có lỗi khi đặt hàng:', err);
+      alert('Có lỗi khi đặt hàng. Vui lòng thử lại!');
+    }
   };
 
   const calculateTotal = () => {

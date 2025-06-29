@@ -1,47 +1,51 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "../assets/home.css";
 import NavBar from "../components/NavBar";
+import ImageWithFallback from "../components/ImageWithFallback";
+import apiService from "../services/apiService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faComments } from "@fortawesome/free-solid-svg-icons";
 
 const Home = () => {
-  // Sample products data based on the image
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "MÁY IN CANON 2900 - CŨ",
-      price: "2,000,000 đ",
-      image: "/product1.jpg",
-    },
-    {
-      id: 2,
-      name: "Màn hình LCD SAMSUNG LS19A330NHEXXV (1366 x 768/TN/60Hz/5 ms)",
-      price: "2,700,000 đ",
-      image: "/product2.jpg",
-    },
-    {
-      id: 3,
-      name: 'Màn hình LCD Dell E1916H-18.5"',
-      price: "2,750,000 đ",
-      image: "/product3.jpg",
-    },
-    {
-      id: 4,
-      name: "Màn hình LCD Samsung LF24T350FHEXXV (23.8 inch/IPS)",
-      price: "3,450,000 đ",
-      image: "/product4.jpg",
-    },
-    {
-      id: 5,
-      name: "MÁY IN CANON 2900",
-      price: "3,490,000 đ",
-      image: "/product5.jpg",
-    },
-  ];
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedProducts = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch featured laptops and printers
+        const [featuredLaptops, featuredPrinters] = await Promise.all([
+          apiService.getFeaturedLaptops(),
+          apiService.getFeaturedPrinters()
+        ]);
+        
+        // Combine and format products
+        const allFeatured = [
+          ...(featuredLaptops.data || []),
+          ...(featuredPrinters.data || [])
+        ];
+        
+        const formattedProducts = allFeatured
+          .slice(0, 8) // Limit to 8 featured products
+          .map(product => apiService.formatProductForDisplay(product));
+        
+        setFeaturedProducts(formattedProducts);
+      } catch (error) {
+        console.error('Error fetching featured products:', error);
+        // Keep default empty array on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedProducts();
+  }, []);
 
   return (
-    <div className="home-container">
+    <div className="home-container home">
       <NavBar />
 
       <main className="main-content">
@@ -114,35 +118,60 @@ const Home = () => {
         </section>
         {/* Featured Products Section */}
         <section className="featured-products">
-          <div className="container">            <div className="section-header">
+          <div className="container">
+            <div className="section-header">
               <h2 className="section-title">SẢN PHẨM ĐANG BÁN CHẠY</h2>
-              <Link to="/products" className="view-all">
-                Xem tất cả
+              <Link to="/services" className="view-all">
+                Xem dịch vụ
               </Link>
             </div>
 
-            <div className="product-grid">              {featuredProducts.map((product) => (
-                <div key={product.id} className="product-card">
-                  <div className="product-image">
-                    <Link to={`/product/${product.id}`}>
-                      <img src={product.image} alt={product.name} />
-                    </Link>
-                  </div>
-                  <div className="product-info">
-                    <h3 className="product-name">
-                      <Link to={`/product/${product.id}`}>{product.name}</Link>
-                    </h3>
-                    <div className="product-price">
-                      <span className="price-label">Giá KM: </span>
-                      <span className="price-value">{product.price}</span>
+            {loading ? (
+              <div className="loading-products">Đang tải sản phẩm...</div>
+            ) : (
+              <div className="product-grid">
+                {featuredProducts.length > 0 ? (
+                  featuredProducts.map((product) => (
+                    <div key={product.id} className="product-card">
+                      {product.discount && (
+                        <div className="discount-badge">Giảm {product.discount}</div>
+                      )}
+                      <div className="product-image">
+                        <Link to={`/product/${product.id}`}>
+                          <ImageWithFallback
+                            src={product.image}
+                            fallbackSrc={product.category === 'laptop' ? 
+                              'http://localhost:3000/uploads/placeholder-laptop.jpg' : 
+                              'http://localhost:3000/uploads/placeholder-printer.jpg'
+                            }
+                            alt={product.name}
+                          />
+                        </Link>
+                      </div>
+                      <div className="product-info">
+                        <h3 className="product-name">
+                          <Link to={`/product/${product.id}`}>{product.name}</Link>
+                        </h3>
+                        <div className="product-specs">{product.specs}</div>
+                        <div className="product-price">
+                          <span className="price-label">Giá KM: </span>
+                          <span className="price-value">{product.discountPrice}</span>
+                          {product.originalPrice !== product.discountPrice && (
+                            <span className="original-price">{product.originalPrice}</span>
+                          )}
+                        </div>
+                        <div className="product-brand">Thương hiệu: {product.brand}</div>
+                        <Link to={`/product/${product.id}`} className="btn-details">
+                          Chi tiết
+                        </Link>
+                      </div>
                     </div>
-                    <Link to={`/product/${product.id}`} className="btn-details">
-                      Chi tiết
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  ))
+                ) : (
+                  <div className="no-products">Không có sản phẩm nổi bật</div>
+                )}
+              </div>
+            )}
           </div>
         </section>{" "}
         {/* Chat Support Section */}

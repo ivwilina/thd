@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f8f9fa"/>
+  <g fill="#6c757d">
+    <!-- Laptop outline -->
+    <rect x="50" y="80" width="300" height="180" rx="10" fill="none" stroke="#6c757d" stroke-width="2"/>
+    <rect x="60" y="90" width="280" height="160" fill="#343a40"/>
+    <rect x="70" y="100" width="260" height="140" fill="#495057"/>
+    
+    <!-- Screen -->
+    <rect x="90" y="120" width="220" height="120" fill="#e9ecef"/>
+    
+    <!-- Keyboard area -->
+    <rect x="70" y="260" width="260" height="10" fill="#343a40"/>
+    
+    <!-- Logo/brand area -->
+    <rect x="180" y="180" width="40" height="20" fill="#007bff"/>
+    
+    <!-- Text -->
+    <text x="200" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#6c757d">
+      Laptop Image
+    </text>
+    <text x="200" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6c757d">
+      Placeholder
+    </text>
+  </g>
+</svg>

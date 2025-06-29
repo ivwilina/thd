@@ -1,15 +1,54 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "../assets/navbar.css";
+import cartService from "../services/cartService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
   faBars,
   faComments,
   faCaretDown,
+  faShoppingCart,
 } from "@fortawesome/free-solid-svg-icons";
 
 const NavBar = () => {
+  const [cartItemCount, setCartItemCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Lấy số lượng sản phẩm trong giỏ hàng khi component mount
+    const updateCartCount = () => {
+      const count = cartService.getCartItemCount();
+      setCartItemCount(count);
+    };
+
+    updateCartCount();
+
+    // Lắng nghe thay đổi giỏ hàng
+    cartService.addListener(updateCartCount);
+
+    return () => {
+      cartService.removeListener(updateCartCount);
+    };
+  }, []);
+
+  // Xử lý tìm kiếm
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      // Điều hướng đến trang tất cả sản phẩm với query tìm kiếm
+      navigate(`/all-products?query=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
+
+  // Xử lý tìm kiếm khi nhấn Enter
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch(e);
+    }
+  };
+
   return (
     <header className="navbar-container">
       {/* Top Navigation */}
@@ -56,12 +95,32 @@ const NavBar = () => {
             </Link>
           </div>
           <div className="search-box">
-            <input type="text" placeholder="Nhập từ khóa tìm kiếm" />{" "}
-            <button className="search-button">
-              <FontAwesomeIcon icon={faSearch} />
-            </button>
+            <form
+              onSubmit={handleSearch}
+              style={{ display: "flex", alignItems: "center" }}
+            >
+              <input
+                type="text"
+                placeholder="Tìm kiếm laptop, máy in, thương hiệu..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleKeyPress}
+                style={{ flex: 1 }}
+              />
+              <button className="search-button" type="submit">
+                <FontAwesomeIcon icon={faSearch} />
+              </button>
+            </form>
           </div>
           <div className="contact-info">
+            <div className="cart-icon">
+              <Link to="/cart" className="cart-link">
+                <FontAwesomeIcon icon={faShoppingCart} />
+                {cartItemCount > 0 && (
+                  <span className="cart-badge">{cartItemCount}</span>
+                )}
+              </Link>
+            </div>
             <div className="hotline-box">
               <span className="hotline-label">HOTLINE</span>
               <div className="phone-numbers">
@@ -78,34 +137,44 @@ const NavBar = () => {
       <nav className="main-nav">
         <div className="container main-nav-container">
           <ul className="main-menu">
-            {" "}            <li className="menu-category">
-              <FontAwesomeIcon icon={faBars} />
-              <span>DANH MỤC SẢN PHẨM</span>
+            {" "}
+            <li className="menu-category">
+              <div className="menu-category-content">
+                <FontAwesomeIcon icon={faBars} />
+                <span>DANH MỤC SẢN PHẨM</span>
+              </div>
               <FontAwesomeIcon icon={faCaretDown} className="caret-icon" />
               <div className="dropdown-menu">
                 <ul className="category-dropdown-list">
-                  <li><Link to="/laptop-chinh-hang">Laptop Chính Hãng</Link></li>
-                  <li><Link to="/may-in-chinh-hang">MÁY IN CHÍNH HÃNG</Link></li>
-                  <li><Link to="/hop-muc-may-in">HỘP MỰC MÁY IN</Link></li>
-                  <li><Link to="/laptop-cu-gia-re">LAPTOP CŨ GIÁ RẺ</Link></li>
-                  <li><Link to="/may-in-cu">MÁY IN CŨ</Link></li>
+                  <li>
+                    <Link to="/all-products">TẤT CẢ SẢN PHẨM</Link>
+                  </li>
+                  <li>
+                    <Link to="/laptop-chinh-hang">Laptop Chính Hãng</Link>
+                  </li>
+                  <li>
+                    <Link to="/may-in-chinh-hang">MÁY IN CHÍNH HÃNG</Link>
+                  </li>
+                  <li>
+                    <Link to="/laptop-cu-gia-re">LAPTOP CŨ GIÁ RẺ</Link>
+                  </li>
+                  <li>
+                    <Link to="/may-in-cu">MÁY IN CŨ</Link>
+                  </li>
                 </ul>
               </div>
             </li>
             <li>
-              <Link to="/sua-laptop">SỬA LAPTOP TẠI NHÀ</Link>
+              <Link to="/services">DỊCH VỤ</Link>
             </li>
             <li>
-              <Link to="/cho-thue-laptop">CHO THUÊ LAPTOP PC, MÁY IN</Link>
+              <Link to="/services">SỬA LAPTOP TẠI NHÀ</Link>
             </li>
             <li>
-              <Link to="/do-muc-may-in">ĐỔ MỰC MÁY IN</Link>
+              <Link to="/services">SỬA MÁY TÍNH, MÁY IN</Link>
             </li>
             <li>
-              <Link to="/sua-may-tinh">SỬA MÁY TÍNH, MÁY IN</Link>
-            </li>
-            <li>
-              <Link to="/mua-may-tinh-cu">MUA MÁY TÍNH, MÁY IN CŨ</Link>
+              <Link to="/all-products?condition=Cũ">MUA MÁY TÍNH, MÁY IN CŨ</Link>
             </li>
           </ul>
         </div>

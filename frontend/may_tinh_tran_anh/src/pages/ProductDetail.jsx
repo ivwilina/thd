@@ -1,109 +1,209 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import '../assets/productDetail.css';
 import NavBar from '../components/NavBar';
+import ImageWithFallback from '../components/ImageWithFallback';
+import apiService from '../services/apiService';
+import cartService from '../services/cartService';
+import inventoryService from '../services/inventoryService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShoppingCart, faCheck, faExclamationCircle, faHeart, faShare, faStar } from '@fortawesome/free-solid-svg-icons';
+import { faShoppingCart, faCheck, faExclamationCircle, faStar, faCartPlus } from '@fortawesome/free-solid-svg-icons';
 
 const ProductDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const [inventory, setInventory] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-    // Sample product details (in a real app, this would come from an API)
-  const productDetails = useMemo(() => ({
-    1: {
-      id: 1,
-      name: 'Laptop Dell Inspiron 15 3520 5310BLK 102F0',
-      description: 'Laptop Dell Inspiron 15 3520 với thiết kế mỏng nhẹ, hiệu năng mạnh mẽ từ bộ vi xử lý Intel Core i5 thế hệ 11, phù hợp cho công việc văn phòng và học tập hàng ngày.',
-      specs: 'Intel Core i5-1155G7, 8GB RAM, 256GB SSD, 15.6" Full HD',      originalPrice: '13.990.000đ',
-      discountPrice: '11.990.000đ',
-      discount: '11%',
-      savingAmount: '119.900đ',
-      brand: 'Dell',
-      images: ['/laptop1.jpg', '/laptop1-side.jpg', '/laptop1-back.jpg', '/laptop1-keyboard.jpg'],
-      stock: 15,
-      warrantyInfo: '12 tháng chính hãng',
-      specifications: [
-        { name: 'CPU', value: 'Intel Core i5-1155G7 (up to 4.50 GHz, 8MB Cache)' },
-        { name: 'RAM', value: '8GB DDR4 3200MHz' },
-        { name: 'Ổ cứng', value: '256GB SSD NVMe PCIe' },
-        { name: 'Màn hình', value: '15.6 inch Full HD (1920 x 1080), Anti-Glare' },
-        { name: 'Card đồ họa', value: 'Intel Iris Xe Graphics' },
-        { name: 'Cổng giao tiếp', value: '1 x USB 3.2, 2 x USB 2.0, 1 x HDMI, 1 x RJ45, 1 x SD Card' },
-        { name: 'Hệ điều hành', value: 'Windows 11 Home' },
-        { name: 'Pin', value: '3 Cell 41WHr' },
-        { name: 'Trọng lượng', value: '1.83 kg' },
-        { name: 'Màu sắc', value: 'Đen' }
-      ],
-      features: [
-        'Hiệu năng mạnh mẽ với CPU Intel thế hệ 11',
-        'Màn hình Full HD sắc nét, chống chói',
-        'Thời lượng pin cả ngày cho công việc và học tập',
-        'Bàn phím chiclet thoải mái khi đánh máy',
-        'Webcam HD tích hợp cho học trực tuyến'
-      ],
-      ratings: {
-        average: 4.5,
-        count: 28
-      }
-    },
-    2: {
-      id: 2,
-      name: 'Laptop Dell Inspiron 15 3520 6H3D73',
-      description: 'Laptop Dell Inspiron 15 3520 phiên bản cao cấp với bộ vi xử lý Intel Core i7 thế hệ 12, RAM 16GB và SSD 512GB, đáp ứng tốt nhu cầu đa nhiệm và làm việc nặng.',
-      specs: 'Intel Core i7-1255U, 16GB RAM, 512GB SSD, 15.6" Full HD',      originalPrice: '19.990.000đ',
-      discountPrice: '17.990.000đ',
-      discount: '10%',
-      savingAmount: '179.900đ',
-      brand: 'Dell',
-      images: ['/laptop2.jpg', '/laptop2-side.jpg', '/laptop2-back.jpg', '/laptop2-keyboard.jpg'],
-      stock: 8,
-      warrantyInfo: '12 tháng chính hãng',
-      specifications: [
-        { name: 'CPU', value: 'Intel Core i7-1255U (up to 4.70 GHz, 12MB Cache)' },
-        { name: 'RAM', value: '16GB DDR4 3200MHz' },
-        { name: 'Ổ cứng', value: '512GB SSD NVMe PCIe' },
-        { name: 'Màn hình', value: '15.6 inch Full HD (1920 x 1080), Anti-Glare' },
-        { name: 'Card đồ họa', value: 'Intel Iris Xe Graphics' },
-        { name: 'Cổng giao tiếp', value: '1 x USB 3.2, 2 x USB 2.0, 1 x HDMI, 1 x RJ45, 1 x SD Card' },
-        { name: 'Hệ điều hành', value: 'Windows 11 Home' },
-        { name: 'Pin', value: '3 Cell 41WHr' },
-        { name: 'Trọng lượng', value: '1.83 kg' },
-        { name: 'Màu sắc', value: 'Đen' }
-      ],
-      features: [
-        'Hiệu năng mạnh mẽ với CPU Intel thế hệ 12',
-        'RAM 16GB cho đa nhiệm mượt mà',
-        'SSD 512GB tốc độ cao, khởi động nhanh',
-        'Màn hình Full HD sắc nét, chống chói',
-        'Thiết kế gọn nhẹ, dễ dàng di chuyển'
-      ],
-      ratings: {
-        average: 4.7,
-        count: 15
-      }
-    },    // More products can be added here
-  }), []);
+  const [addToCartLoading, setAddToCartLoading] = useState(false);
+  const [showCartMessage, setShowCartMessage] = useState(false);
+
   useEffect(() => {
-    // Simulate API call to fetch product details
-    setLoading(true);
-    setTimeout(() => {
-      if (productDetails[id]) {
-        setProduct(productDetails[id]);
-        setLoading(false);
-      } else {
-        // Handle product not found
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Try to fetch from both laptop and printer endpoints
+        let productData = null;
+        
+        try {
+          productData = await apiService.getLaptopById(id);
+        } catch {
+          try {
+            productData = await apiService.getPrinterById(id);
+          } catch {
+            throw new Error('Không tìm thấy sản phẩm');
+          }
+        }
+        
+        if (productData && productData.data) {
+          // Fetch inventory data for this product
+          console.log(`📋 Fetching inventory for product: ${id}`);
+          const inventoryData = await inventoryService.getProductInventory(id);
+          console.log(`✅ Inventory data for ${id}:`, {
+            available: inventoryData.availableStock,
+            status: inventoryData.stockStatus,
+            fallback: inventoryData._fallback,
+            reason: inventoryData._reason
+          });
+          setInventory(inventoryData);
+          
+          // Show warning if using fallback data
+          if (inventoryData._fallback) {
+            if (inventoryData._reason === 'BACKEND_UNAVAILABLE') {
+              console.warn('⚠️ Inventory service unavailable, showing estimated stock');
+            } else if (inventoryData._reason === 'NOT_FOUND') {
+              console.warn('⚠️ No inventory data found for this product');
+            }
+          }
+          
+          // Format product data for display with inventory info
+          const formattedProduct = formatProductDetail(productData.data, inventoryData);
+          setProduct(formattedProduct);
+        } else {
+          throw new Error('Không tìm thấy sản phẩm');
+        }
+      } catch (err) {
+        console.error('Error fetching product:', err);
+        setError(err.message || 'Không thể tải thông tin sản phẩm');
+      } finally {
         setLoading(false);
       }
-    }, 500);
-  }, [id, productDetails]);
+    };
+
+    if (id) {
+      fetchProduct();
+    }
+  }, [id]);
+
+  // Format product data for detailed view
+  const formatProductDetail = (productData, inventoryData = null) => {
+    const isLaptop = productData.cpu; // Laptops have CPU field
+    
+    // Get stock info from inventory data
+    const stockInfo = inventoryData ? {
+      currentStock: inventoryData.currentStock || 0,
+      availableStock: inventoryData.availableStock || 0,
+      reservedStock: inventoryData.reservedStock || 0,
+      stockStatus: inventoryData.stockStatus || 'OUT_OF_STOCK',
+      needsReorder: inventoryData.needsReorder || true
+    } : {
+      currentStock: 0,
+      availableStock: 0,
+      reservedStock: 0,
+      stockStatus: 'OUT_OF_STOCK',
+      needsReorder: true
+    };
+    
+    if (isLaptop) {
+      return {
+        id: productData._id,
+        name: productData.displayName,
+        description: productData.description || 'Laptop chất lượng cao với hiệu năng mạnh mẽ.',
+        specs: `${productData.cpu?.name || ''} ${productData.ramDetails} ${productData.storageDetails} ${productData.screenDetails}`,
+        originalPrice: `${productData.price.toLocaleString('vi-VN')}đ`,
+        discountPrice: productData.discount ? 
+          `${Math.round(productData.price * (1 - productData.discount / 100)).toLocaleString('vi-VN')}đ` : 
+          `${productData.price.toLocaleString('vi-VN')}đ`,
+        discount: productData.discount ? `${productData.discount}%` : null,
+        savingAmount: productData.discount ? 
+          `${Math.round(productData.price * productData.discount / 100).toLocaleString('vi-VN')}đ` : '0đ',
+        brand: productData.brand?.name || 'Unknown',
+        images: productData.images?.map(img => 
+          img.startsWith('http') ? img : `http://localhost:3000/uploads/${img}`
+        ) || ['http://localhost:3000/uploads/placeholder-laptop.jpg'],
+        // Use inventory data for stock info
+        stock: stockInfo.availableStock,
+        stockStatus: stockInfo.stockStatus,
+        totalStock: stockInfo.currentStock,
+        reservedStock: stockInfo.reservedStock,
+        warrantyInfo: productData.warranty || '12 tháng chính hãng',
+        category: 'laptop',
+        isNew: productData.isNewProduct,
+        isFeatured: productData.isFeatured,
+        specifications: [
+          { name: 'CPU', value: productData.cpu?.name || 'N/A' },
+          { name: 'RAM', value: productData.ramDetails || 'N/A' },
+          { name: 'Ổ cứng', value: productData.storageDetails || 'N/A' },
+          { name: 'Màn hình', value: productData.screenDetails || 'N/A' },
+          { name: 'Card đồ họa', value: productData.graphicsCard?.name || 'N/A' },
+          { name: 'Hệ điều hành', value: productData.operatingSystem || 'N/A' },
+          { name: 'Cân nặng', value: productData.weight ? `${productData.weight} kg` : 'N/A' },
+          { name: 'Màu sắc', value: productData.color || 'N/A' }
+        ],
+        features: [
+          'Hiệu năng mạnh mẽ cho công việc và giải trí',
+          'Thiết kế mỏng nhẹ, dễ dàng mang theo',
+          'Màn hình sắc nét, màu sắc chân thực',
+          'Bàn phím thoải mái, thời lượng pin lâu dài',
+          'Cổng kết nối đa dạng, mở rộng linh hoạt'
+        ],
+        ratings: {
+          average: 4.5,
+          count: Math.floor(Math.random() * 50) + 10
+        }
+      };
+    } else {
+      // Printer
+      return {
+        id: productData._id,
+        name: productData.description,
+        description: productData.description || 'Máy in chất lượng cao với tính năng hiện đại.',
+        specs: `${productData.printType} ${productData.printFeatures?.map(f => f.name).join(', ') || ''}`,
+        originalPrice: `${productData.price.toLocaleString('vi-VN')}đ`,
+        discountPrice: productData.discount ? 
+          `${Math.round(productData.price * (1 - productData.discount / 100)).toLocaleString('vi-VN')}đ` : 
+          `${productData.price.toLocaleString('vi-VN')}đ`,
+        discount: productData.discount ? `${productData.discount}%` : null,
+        savingAmount: productData.discount ? 
+          `${Math.round(productData.price * productData.discount / 100).toLocaleString('vi-VN')}đ` : '0đ',
+        brand: productData.brand?.name || 'Unknown',
+        images: productData.images?.map(img => 
+          img.startsWith('http') ? img : `http://localhost:3000/uploads/${img}`
+        ) || ['http://localhost:3000/uploads/placeholder-printer.jpg'],
+        // Use inventory data for stock info
+        stock: stockInfo.availableStock,
+        stockStatus: stockInfo.stockStatus,
+        totalStock: stockInfo.currentStock,
+        reservedStock: stockInfo.reservedStock,
+        warrantyInfo: productData.warranty || '12 tháng chính hãng',
+        category: 'printer',
+        isNew: productData.isNewProduct,
+        isFeatured: productData.isFeatured,
+        specifications: [
+          { name: 'Loại in', value: productData.printType || 'N/A' },
+          { name: 'Tốc độ in', value: productData.printSpeed || 'N/A' },
+          { name: 'Độ phân giải', value: productData.resolution || 'N/A' },
+          { name: 'Kết nối', value: productData.connectivity?.join(', ') || 'N/A' },
+          { name: 'Định dạng giấy', value: productData.paperSizes?.join(', ') || 'N/A' },
+          { name: 'Hệ điều hành hỗ trợ', value: productData.operatingSystem || 'N/A' },
+          { name: 'Kích thước', value: productData.dimensions || 'N/A' },
+          { name: 'Cân nặng', value: productData.weight ? `${productData.weight} kg` : 'N/A' }
+        ],
+        features: [
+          'Chất lượng in cao, văn bản sắc nét',
+          'Tốc độ in nhanh, tiết kiệm thời gian',
+          'Kết nối đa dạng: USB, WiFi, Ethernet',
+          'Hỗ trợ nhiều định dạng giấy khác nhau',
+          'Tiết kiệm mực in, thân thiện môi trường'
+        ],
+        ratings: {
+          average: 4.3,
+          count: Math.floor(Math.random() * 30) + 5
+        }
+      };
+    }
+  };
 
   const handleQuantityChange = (action) => {
     if (action === 'increase') {
-      setQuantity(prev => prev + 1);
+      if (product && quantity < product.stock) {
+        setQuantity(prev => prev + 1);
+      }
     } else if (action === 'decrease' && quantity > 1) {
       setQuantity(prev => prev - 1);
     }
@@ -123,12 +223,55 @@ const ProductDetail = () => {
     return stars;
   };
 
+  // Xử lý thêm vào giỏ hàng
+  const handleAddToCart = async () => {
+    try {
+      setAddToCartLoading(true);
+      cartService.addToCart(product, quantity);
+      setShowCartMessage(true);
+      
+      // Ẩn thông báo sau 3 giây
+      setTimeout(() => {
+        setShowCartMessage(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setAddToCartLoading(false);
+    }
+  };
+
+  // Xử lý mua ngay
+  const handleBuyNow = () => {
+    const productToCheckout = {
+      ...product,
+      quantity: quantity
+    };
+    navigate('/checkout', { state: { product: productToCheckout } });
+  };
+
   if (loading) {
     return (
       <div className="product-detail-container">
         <NavBar />
         <div className="container">
           <div className="loading">Đang tải thông tin sản phẩm...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="product-detail-container">
+        <NavBar />
+        <div className="container">
+          <div className="product-error">
+            <h2>Có lỗi xảy ra</h2>
+            <p>{error}</p>
+            <button onClick={() => window.location.reload()}>Thử lại</button>
+            <Link to="/" className="back-to-home">Quay lại trang chủ</Link>
+          </div>
         </div>
       </div>
     );
@@ -150,7 +293,7 @@ const ProductDetail = () => {
   }
 
   return (
-    <div className="product-detail-container">
+    <div className="product-detail-container product-detail">
       <NavBar />
       
       <main className="product-detail-content">
@@ -165,7 +308,14 @@ const ProductDetail = () => {
             {/* Product Images */}
             <div className="product-images">
               <div className="product-main-image">
-                <img src={product.images[selectedImage]} alt={product.name} />
+                <ImageWithFallback
+                  src={product.images[selectedImage]}
+                  fallbackSrc={product.category === 'laptop' ? 
+                    'http://localhost:3000/uploads/placeholder-laptop.jpg' : 
+                    'http://localhost:3000/uploads/placeholder-printer.jpg'
+                  }
+                  alt={product.name}
+                />
               </div>
               <div className="product-thumbnail-images">
                 {product.images.map((img, index) => (
@@ -174,7 +324,14 @@ const ProductDetail = () => {
                     className={`thumbnail ${selectedImage === index ? 'active' : ''}`}
                     onClick={() => setSelectedImage(index)}
                   >
-                    <img src={img} alt={`${product.name} - thumbnail ${index + 1}`} />
+                    <ImageWithFallback
+                      src={img}
+                      fallbackSrc={product.category === 'laptop' ? 
+                        'http://localhost:3000/uploads/placeholder-laptop.jpg' : 
+                        'http://localhost:3000/uploads/placeholder-printer.jpg'
+                      }
+                      alt={`${product.name} - thumbnail ${index + 1}`}
+                    />
                   </div>
                 ))}
               </div>
@@ -201,16 +358,36 @@ const ProductDetail = () => {
               <div className="product-price-section">
                 <div className="current-price">{product.discountPrice}</div>
                 <div className="original-price">{product.originalPrice}</div>
-                <div className="discount-badge">-{product.discount}</div>
+                {product.discount && (
+                  <div className="price-discount-badge">-{product.discount}</div>
+                )}
               </div>
                 {/* Product promotions section removed */}
               
               <div className="product-availability">
                 <FontAwesomeIcon 
                   icon={product.stock > 0 ? faCheck : faExclamationCircle} 
-                  className={`icon ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}`} 
+                  className={`icon ${inventoryService.getStockStatusClass(product.stockStatus)}`}
                 />
-                <span>{product.stock > 0 ? `Còn hàng (${product.stock} sản phẩm)` : 'Hết hàng'}</span>
+                <div className="stock-info">
+                  <span className="stock-status">
+                    {product.stock > 0 ? 
+                      `Còn hàng (${product.stock} sản phẩm)` : 
+                      inventoryService.formatStockStatus(product.stockStatus)
+                    }
+                    {inventory && inventory._fallback && (
+                      <span className="estimated-stock"> *Ước tính</span>
+                    )}
+                  </span>
+                  {product.stock > 0 && product.stockStatus === 'LOW_STOCK' && (
+                    <span className="low-stock-warning">⚠️ Chỉ còn ít hàng!</span>
+                  )}
+                  {inventory && inventory.reservedStock > 0 && (
+                    <span className="reserved-info">
+                      ({inventory.reservedStock} sản phẩm đang được đặt trước)
+                    </span>
+                  )}
+                </div>
               </div>
               
               <div className="product-actions">
@@ -218,7 +395,7 @@ const ProductDetail = () => {
                   <button 
                     className="qty-btn decrease" 
                     onClick={() => handleQuantityChange('decrease')}
-                    disabled={quantity <= 1}
+                    disabled={quantity <= 1 || product.stock <= 0}
                   >
                     -
                   </button>
@@ -226,44 +403,43 @@ const ProductDetail = () => {
                     type="text" 
                     value={quantity} 
                     readOnly 
+                    disabled={product.stock <= 0}
                   />
                   <button 
                     className="qty-btn increase" 
                     onClick={() => handleQuantityChange('increase')}
+                    disabled={quantity >= product.stock || product.stock <= 0}
                   >
                     +
                   </button>
                 </div>
                 
-                <button className="add-to-cart-btn" disabled={product.stock <= 0}>
-                  <FontAwesomeIcon icon={faShoppingCart} />
-                  Thêm vào giỏ hàng
-                </button>
-                  <button 
-                  className="buy-now-btn" 
-                  disabled={product.stock <= 0}
-                  onClick={() => {
-                    const productToCheckout = {
-                      ...product,
-                      quantity: quantity
-                    };
-                    navigate('/checkout', { state: { product: productToCheckout } });
-                  }}
+                <button 
+                  className="add-to-cart-btn" 
+                  disabled={product.stock <= 0 || addToCartLoading || quantity > product.stock}
+                  onClick={handleAddToCart}
                 >
-                  Mua ngay
+                  <FontAwesomeIcon icon={faShoppingCart} />
+                  {product.stock <= 0 ? 'Hết hàng' : 
+                   addToCartLoading ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
+                </button>
+                
+                <button 
+                  className="buy-now-btn" 
+                  disabled={product.stock <= 0 || quantity > product.stock}
+                  onClick={handleBuyNow}
+                >
+                  {product.stock <= 0 ? 'Hết hàng' : 'Mua ngay'}
                 </button>
               </div>
               
-              <div className="product-secondary-actions">
-                <button className="wishlist-btn">
-                  <FontAwesomeIcon icon={faHeart} />
-                  Thêm vào yêu thích
-                </button>
-                <button className="share-btn">
-                  <FontAwesomeIcon icon={faShare} />
-                  Chia sẻ
-                </button>
-              </div>
+              {/* Thông báo thêm vào giỏ hàng thành công */}
+              {showCartMessage && (
+                <div className="cart-success-message">
+                  <FontAwesomeIcon icon={faCheck} />
+                  Đã thêm sản phẩm vào giỏ hàng!
+                </div>
+              )}
               
               <div className="product-warranty">
                 <strong>Bảo hành:</strong> {product.warrantyInfo}

@@ -1,3 +1,8 @@
+/* Reset and Base Styles */
+* {
+  box-sizing: border-box;
+}
+
 /* Navbar Styles */
 .navbar-container {
   width: 100%;
@@ -43,55 +48,88 @@
 
 /* Main Header */
 .main-header {
-  padding: 8px 0;
+  padding: 15px 0;
   background-color: #fff;
+  border-bottom: 1px solid #e9ecef;
 }
 
 .main-header-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
 }
 
 .logo {
+  flex: 0 0 220px;
   max-width: 220px;
 }
 
 .logo-img {
   width: 100%;
   height: auto;
+  max-height: 60px;
+  object-fit: contain;
 }
 
 .search-box {
   display: flex;
-  width: 40%;
+  flex: 1;
+  max-width: 500px;
+  margin: 0 30px;
 }
 
 .search-box input {
-  padding: 7px;
-  width: 100%;
-  border: 1px solid #ccc;
+  flex: 1;
+  padding: 12px 15px;
+  border: 2px solid #e9ecef;
   border-right: none;
+  border-radius: 25px 0 0 25px;
   outline: none;
-  font-size: 13px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.search-box input:focus {
+  border-color: #e63312;
 }
 
 .search-button {
-  padding: 7px 12px;
-  background-color: #f7a000;
-  border: 1px solid #f7a000;
+  padding: 12px 20px;
+  background-color: #e63312;
+  border: 2px solid #e63312;
+  border-radius: 0 25px 25px 0;
   color: white;
   cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 16px;
+}
+
+.search-button:hover {
+  background-color: #d62000;
+  border-color: #d62000;
 }
 
 .contact-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 0 0 auto;
+}
+
+.hotline-box {
   text-align: right;
+  min-width: 200px;
 }
 
 .hotline-label {
   display: block;
   font-weight: bold;
   margin-bottom: 5px;
+  font-size: 12px;
+  color: #666;
 }
 
 .phone-numbers a {
@@ -101,10 +139,77 @@
   font-size: 15px;
 }
 
+/* Cart Icon */
+.cart-icon {
+  position: relative;
+}
+
+.cart-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #f8f9fa;
+  border-radius: 50%;
+  color: #e63312;
+  text-decoration: none;
+  font-size: 18px;
+  transition: all 0.2s ease;
+  border: 2px solid #e9ecef;
+}
+
+.cart-link:hover {
+  background: #e63312;
+  color: white;
+  border-color: #e63312;
+  transform: scale(1.05);
+}
+
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #dc3545;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  border: 2px solid white;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.hotline-box {
+  text-align: right;
+}
+
 /* Main Navigation */
 .main-nav {
   background-color: #e63312;
   color: white;
+}
+
+.main-nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
 }
 
 .main-menu {
@@ -134,20 +239,26 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  justify-content: space-between;
   cursor: pointer;
   position: relative;
   background-color: #d62000; /* Slightly darker background to distinguish it */
-  padding-right: 30px; /* Add extra space for dropdown icon */
+  padding: 0 15px; /* Equal padding on both sides */
+}
+
+.menu-category-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .menu-category svg:first-of-type {
-  margin-right: 5px;
+  margin-right: 0;
 }
 
 .caret-icon {
-  position: absolute;
-  right: 10px;
   font-size: 14px;
+  margin-left: auto; /* Push to the right */
 }
 
 .dropdown-menu {
@@ -205,4 +316,95 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 15px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main-header-container {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .logo {
+    flex: none;
+    text-align: center;
+  }
+  
+  .search-box {
+    margin: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .contact-info {
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .hotline-box {
+    min-width: auto;
+    text-align: center;
+  }
+  
+  .phone-numbers {
+    font-size: 14px;
+  }
+  
+  .main-menu {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .main-menu li {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .menu-category {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .dropdown-menu {
+    width: 100%;
+    left: 0;
+    right: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-header {
+    padding: 10px 0;
+  }
+  
+  .main-header-container {
+    gap: 10px;
+  }
+  
+  .search-box input {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .search-button {
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+  
+  .cart-link {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+  
+  .cart-badge {
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+  }
+  
+  .phone-numbers a {
+    font-size: 13px;
+  }
 }

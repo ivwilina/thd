@@ -56,28 +56,28 @@
   font-size: 14px;
 }
 
-.product-image {
+.checkout-container .product-image {
   width: 80px;
 }
 
-.product-image img {
+.checkout-container .product-image img {
   max-width: 60px;
   max-height: 60px;
   object-fit: contain;
 }
 
-.product-name {
+.checkout-container .product-name {
   font-size: 14px;
   width: 40%;
 }
 
-.product-price,
-.product-total {
+.checkout-container .product-price,
+.checkout-container .product-total {
   font-weight: 600;
   color: #e63312;
 }
 
-.product-quantity input {
+.checkout-container .product-quantity input {
   width: 60px;
   padding: 5px;
   text-align: center;
@@ -242,7 +242,41 @@
     overflow-x: auto;
   }
 
-  .product-name {
+  .checkout-container .product-name {
     width: auto;
   }
+}
+
+/* Staff Orders Table */
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 24px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.orders-table th, .orders-table td {
+  border: 1px solid #e0e0e0;
+  padding: 10px 8px;
+  text-align: left;
+}
+.orders-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+.orders-table tr:nth-child(even) {
+  background: #fafafa;
+}
+.orders-table button {
+  background: #e63312;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.orders-table button:hover {
+  background: #b71c00;
 }

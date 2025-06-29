@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f8f9fa"/>
+  <g fill="#6c757d">
+    <!-- Printer body -->
+    <rect x="80" y="120" width="240" height="120" rx="8" fill="#495057"/>
+    <rect x="90" y="130" width="220" height="100" fill="#6c757d"/>
+    
+    <!-- Paper tray -->
+    <rect x="70" y="240" width="260" height="20" rx="4" fill="#343a40"/>
+    
+    <!-- Control panel -->
+    <rect x="250" y="110" width="60" height="20" rx="3" fill="#343a40"/>
+    <circle cx="280" r="3" cy="120" fill="#28a745"/>
+    <circle cx="290" r="3" cy="120" fill="#ffc107"/>
+    <circle cx="300" r="3" cy="120" fill="#dc3545"/>
+    
+    <!-- Paper coming out -->
+    <rect x="120" y="100" width="160" height="20" fill="#ffffff" stroke="#dee2e6"/>
+    
+    <!-- Brand logo area -->
+    <rect x="180" y="170" width="40" height="15" fill="#007bff"/>
+    
+    <!-- Text -->
+    <text x="200" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#6c757d">
+      Printer Image
+    </text>
+    <text x="200" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6c757d">
+      Placeholder
+    </text>
+  </g>
+</svg>
