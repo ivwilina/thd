@@ -64,6 +64,77 @@ router.get('/:productId', async (req, res) => {
   }
 });
 
+// GET /api/inventory/staff/products - Lấy danh sách sản phẩm với thông tin stock cho staff
+router.get('/staff/products', async (req, res) => {
+  try {
+    // Lấy tất cả inventory records cho laptop và printer
+    const inventoryRecords = await Inventory.find({ 
+      productType: { $in: ['laptop', 'printer'] },
+      status: 'ACTIVE'
+    });
+
+    const enrichedProducts = await Promise.all(inventoryRecords.map(async (inventory) => {
+      let productDetails = null;
+      
+      try {
+        switch (inventory.productType) {
+          case 'laptop':
+            productDetails = await Laptop.findById(inventory.productId)
+              .populate('brand')
+              .populate('cpu')
+              .select('displayName model brand price cpu');
+            break;
+          case 'printer':
+            productDetails = await Printer.findById(inventory.productId)
+              .populate('brand')
+              .select('displayName name brand price printType');
+            break;
+        }
+      } catch (err) {
+        console.log('Error fetching product details:', err.message);
+      }
+
+      if (!productDetails) return null;
+
+      return {
+        _id: inventory.productId,
+        displayName: productDetails.displayName || productDetails.name,
+        brand: productDetails.brand,
+        price: productDetails.price,
+        stock: inventory.currentStock,
+        productType: inventory.productType,
+        model: productDetails.model,
+        cpu: productDetails.cpu,
+        printType: productDetails.printType,
+        location: inventory.location,
+        reorderLevel: inventory.reorderLevel,
+        minimumStock: inventory.minimumStock
+      };
+    }));
+
+    // Lọc bỏ null values
+    const validProducts = enrichedProducts.filter(product => product !== null);
+
+    res.json({
+      products: validProducts,
+      total: validProducts.length,
+      summary: {
+        totalProducts: validProducts.length,
+        totalStock: validProducts.reduce((sum, p) => sum + p.stock, 0),
+        totalValue: validProducts.reduce((sum, p) => sum + (p.stock * p.price), 0),
+        lowStockCount: validProducts.filter(p => p.stock > 0 && p.stock <= p.reorderLevel).length,
+        outOfStockCount: validProducts.filter(p => p.stock === 0).length,
+        laptopCount: validProducts.filter(p => p.productType === 'laptop').length,
+        printerCount: validProducts.filter(p => p.productType === 'printer').length
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching staff products:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/inventory/stats/overview - Thống kê tổng quan tồn kho
 router.get('/stats/overview', async (req, res) => {
   try {

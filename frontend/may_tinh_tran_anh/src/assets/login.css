@@ -1,0 +1,153 @@
+/* Login Page Styles */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.login-card {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 450px;
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-card h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.login-card input:disabled {
+  background-color: #f8f9fa;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-card button {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.login-card button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.login-card button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 15px;
+  text-align: center;
+  border: 1px solid #f5c6cb;
+  font-size: 14px;
+}
+
+.demo-accounts {
+  margin-top: 30px;
+  padding-top: 25px;
+  border-top: 1px solid #e1e5e9;
+}
+
+.demo-accounts h4 {
+  color: #495057;
+  margin-bottom: 15px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.account-info {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  border-left: 4px solid #667eea;
+}
+
+.account-info strong {
+  color: #333;
+}
+
+.account-info small {
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 15px;
+  }
+  
+  .login-card {
+    padding: 30px 25px;
+  }
+  
+  .login-card h2 {
+    font-size: 1.5rem;
+  }
+  
+  .login-card input,
+  .login-card button {
+    padding: 12px;
+    font-size: 14px;
+  }
+}

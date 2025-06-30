@@ -1,4 +1,5 @@
-import StaffRoute from './components/StaffRoute'
+import ProtectedRoute from './components/ProtectedRoute'
+import RouteMatcher from './components/RouteMatcher'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import './App.css'
 import Home from './pages/Home'
@@ -12,14 +13,24 @@ import StaffOrders from './pages/StaffOrders'
 import Login from './pages/Login'
 import './assets/login.css'
 import StaffDashboard from './pages/StaffDashboard'
-import StaffInventory from './pages/StaffInventory'
+import StaffInventory from './pages/StaffInventoryNew'
+import AdminProducts from './pages/AdminProducts'
+import AdminInventory from './pages/AdminInventory'
+import AdminAccounts from './pages/AdminAccounts'
+import AdminReports from './pages/AdminReports'
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Route mặc định - tự động phân quyền */}
+        <Route path="/" element={<RouteMatcher />} />
+        
+        {/* Trang đăng nhập */}
         <Route path="/login" element={<Login />} />
-        <Route path="/" element={<Home />} />
+        
+        {/* Trang chủ công khai cho khách hàng */}
+        <Route path="/home" element={<Home />} />
         <Route path="/services" element={<ServiceListing />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/product/:id" element={<ProductDetail />} />
@@ -27,9 +38,74 @@ function App() {
         <Route path="/all-products" element={<AllProducts />} />
         <Route path="/search" element={<AllProducts />} />
         <Route path="/:category" element={<ProductListing />} />
-        <Route path="/staff/orders" element={<StaffRoute><StaffOrders /></StaffRoute>} />
-        <Route path="/staff" element={<StaffRoute><StaffDashboard /></StaffRoute>} />
-        <Route path="/staff/inventory" element={<StaffRoute><StaffInventory /></StaffRoute>} />
+        
+        {/* Routes cho Staff - yêu cầu role 'staff' */}
+        <Route 
+          path="/staff" 
+          element={
+            <ProtectedRoute requiredRole="staff">
+              <StaffDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/staff/orders" 
+          element={
+            <ProtectedRoute requiredRole="staff">
+              <StaffOrders />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/staff/inventory" 
+          element={
+            <ProtectedRoute requiredRole="staff">
+              <StaffInventory />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Routes cho Admin - yêu cầu role 'admin' */}
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminProducts />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/products" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminProducts />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/inventory" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminInventory />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/accounts" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminAccounts />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/reports" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminReports />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </Router>
   )

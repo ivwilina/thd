@@ -1,0 +1,316 @@
+/* Staff Orders Styles - Scoped to .staff-orders-page */
+.staff-orders-page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.staff-orders-page .staff-navbar {
+  background-color: #343a40;
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.staff-orders-page .staff-navbar a {
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+  font-weight: 500;
+}
+
+.staff-orders-page .staff-navbar a:hover {
+  background-color: #495057;
+}
+
+.staff-orders-page .staff-navbar a.active {
+  background-color: #007bff;
+}
+
+.staff-orders-page .staff-navbar .staff-nav-brand h3 {
+  margin: 0;
+  color: #fff;
+}
+
+.staff-orders-page .staff-navbar .staff-nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.staff-orders-page .staff-navbar .staff-logout-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-left: auto;
+  transition: background-color 0.3s;
+}
+
+.staff-orders-page .staff-navbar .staff-logout-btn:hover {
+  background-color: #c82333;
+}
+
+.staff-orders-page .staff-orders-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.staff-orders-page .staff-orders-container h1 {
+  color: #343a40;
+  margin-bottom: 30px;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.staff-orders-page .orders-table {
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-top: 20px;
+}
+
+.orders-table th {
+  background-color: #007bff;
+  color: white;
+  padding: 15px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+}
+
+.orders-table td {
+  padding: 15px 12px;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.orders-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.orders-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.action-buttons button {
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.3s;
+  min-width: 70px;
+}
+
+.btn-confirm {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-confirm:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.btn-complete {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-complete:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+.btn-cancel {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 12px;
+  text-align: center;
+  min-width: 80px;
+}
+
+.status-pending {
+  background-color: rgba(255, 165, 0, 0.2);
+  color: #ff8c00;
+}
+
+.status-confirmed {
+  background-color: rgba(0, 123, 255, 0.2);
+  color: #007bff;
+}
+
+.status-processing {
+  background-color: rgba(23, 162, 184, 0.2);
+  color: #17a2b8;
+}
+
+.status-shipping {
+  background-color: rgba(111, 66, 193, 0.2);
+  color: #6f42c1;
+}
+
+.status-delivered {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.status-cancelled {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+/* Loading and error states */
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #6c757d;
+}
+
+.error {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+  margin: 20px 0;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .orders-table {
+    font-size: 13px;
+  }
+  
+  .orders-table th,
+  .orders-table td {
+    padding: 10px 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .staff-navbar {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .staff-navbar a {
+    padding: 8px 15px;
+    font-size: 14px;
+  }
+  
+  .container {
+    padding: 15px;
+  }
+  
+  .container h1 {
+    font-size: 1.5rem;
+  }
+  
+  .orders-table {
+    font-size: 12px;
+    overflow-x: auto;
+    display: block;
+    white-space: nowrap;
+  }
+  
+  .orders-table thead,
+  .orders-table tbody,
+  .orders-table th,
+  .orders-table td,
+  .orders-table tr {
+    display: block;
+  }
+  
+  .orders-table thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+  
+  .orders-table tr {
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    background: white;
+  }
+  
+  .orders-table td {
+    border: none;
+    position: relative;
+    padding-left: 50%;
+    text-align: left;
+    white-space: normal;
+  }
+  
+  .orders-table td:before {
+    content: attr(data-label) ": ";
+    position: absolute;
+    left: 6px;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .action-buttons {
+    justify-content: flex-start;
+    margin-top: 10px;
+  }
+}
+
+/* Utility classes */
+.text-success {
+  color: #28a745 !important;
+  font-weight: bold;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+  font-weight: bold;
+}
+
+.font-weight-bold {
+  font-weight: bold !important;
+}
+
+.text-center {
+  text-align: center !important;
+}

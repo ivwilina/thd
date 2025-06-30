@@ -163,6 +163,81 @@ class ApiService {
     return this.get(`/services/search/${encodeURIComponent(query)}`);
   }
 
+  // ========== ORDER ENDPOINTS ==========
+  
+  // Get all orders
+  async getOrders(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.get(`/orders${queryString ? `?${queryString}` : ''}`);
+  }
+
+  // Get order by ID
+  async getOrderById(id) {
+    return this.get(`/orders/${id}`);
+  }
+
+  // Create new order
+  async createOrder(orderData) {
+    return this.post('/orders', orderData);
+  }
+
+  // Confirm order
+  async confirmOrder(orderId, employeeId) {
+    return this.put(`/orders/${orderId}/confirm`, { employeeId });
+  }
+
+  // Cancel order
+  async cancelOrder(orderId, reason, employeeId) {
+    return this.put(`/orders/${orderId}/cancel`, { reason, employeeId });
+  }
+
+  // Complete order
+  async completeOrder(orderId, employeeId) {
+    return this.put(`/orders/${orderId}/complete`, { employeeId });
+  }
+
+  // Update order status
+  async updateOrderStatus(orderId, status, employeeId) {
+    return this.put(`/orders/${orderId}/status`, { status, employeeId });
+  }
+
+  // Get orders by status
+  async getOrdersByStatus(status) {
+    return this.get(`/orders?status=${status}`);
+  }
+
+  // Inventory Statistics API methods
+  async getInventoryOverview() {
+    return this.get('/inventory/stats/overview');
+  }
+
+  async getInventoryMovements(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.get(`/inventory/stats/movements${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getLowStockProducts() {
+    return this.get('/inventory/stats/low-stock');
+  }
+
+  async getTurnoverStats(period = '30') {
+    return this.get(`/inventory/stats/turnover?period=${period}`);
+  }
+
+  async getValueAnalysis() {
+    return this.get('/inventory/stats/value-analysis');
+  }
+
+  async getInventoryList(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.get(`/inventory${queryString ? `?${queryString}` : ''}`);
+  }
+
+  // Staff Inventory - Get products with stock info
+  async getStaffInventoryProducts() {
+    return this.get('/inventory/staff/products');
+  }
+
   // ========== CATEGORY-SPECIFIC METHODS ==========
   
   // Get products by category
@@ -254,8 +329,89 @@ class ApiService {
       isActive: service.isActive
     };
   }
+
+  // ========== LAPTOP CRUD OPERATIONS ==========
+  
+  // Create laptop
+  async createLaptop(laptopData) {
+    return this.post('/laptops', laptopData);
+  }
+
+  // Update laptop
+  async updateLaptop(id, laptopData) {
+    return this.put(`/laptops/${id}`, laptopData);
+  }
+
+  // Delete laptop
+  async deleteLaptop(id) {
+    return this.delete(`/laptops/${id}`);
+  }
+
+  // ========== PRINTER CRUD OPERATIONS ==========
+  
+  // Create printer
+  async createPrinter(printerData) {
+    return this.post('/printers', printerData);
+  }
+
+  // Update printer
+  async updatePrinter(id, printerData) {
+    return this.put(`/printers/${id}`, printerData);
+  }
+
+  // Delete printer
+  async deletePrinter(id) {
+    return this.delete(`/printers/${id}`);
+  }
+
+  // ========== EMPLOYEE/ACCOUNT CRUD OPERATIONS ==========
+  
+  // Create employee
+  async createEmployee(employeeData) {
+    return this.post('/employees', employeeData);
+  }
+
+  // Update employee
+  async updateEmployee(id, employeeData) {
+    return this.put(`/employees/${id}`, employeeData);
+  }
+
+  // Delete employee
+  async deleteEmployee(id) {
+    return this.delete(`/employees/${id}`);
+  }
+
+  // Get all employees
+  async getEmployees(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const res = await this.get(`/employees${queryString ? `?${queryString}` : ''}`);
+    return Array.isArray(res) ? res : (res.data || []);
+  }
+
+  // Get employee by ID
+  async getEmployeeById(id) {
+    return this.get(`/employees/${id}`);
+  }
+
+  // ========== SERVICE CRUD OPERATIONS ==========
+  
+  // Create service
+  async createService(serviceData) {
+    return this.post('/services', serviceData);
+  }
+
+  // Update service
+  async updateService(id, serviceData) {
+    return this.put(`/services/${id}`, serviceData);
+  }
+
+  // Delete service
+  async deleteService(id) {
+    return this.delete(`/services/${id}`);
+  }
 }
 
 // Create and export a singleton instance
 const apiService = new ApiService();
 export default apiService;
+export { apiService };

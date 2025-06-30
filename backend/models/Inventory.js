@@ -100,7 +100,7 @@ const inventorySchema = new mongoose.Schema({
       default: Date.now
     },
     employeeId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: 'Employee'
     },
     notes: String
@@ -134,11 +134,11 @@ const inventorySchema = new mongoose.Schema({
       default: Date.now
     },
     createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: 'Employee'
     },
     updatedBy: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: 'Employee'
     }
   }

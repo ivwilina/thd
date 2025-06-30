@@ -25,6 +25,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const logRoutes = require('./routes/logRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
+const inventoryStatsRoutes = require('./routes/inventoryStatsRoutes');
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/may_tinh_tran_anh', {
@@ -45,6 +46,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/inventory', inventoryStatsRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

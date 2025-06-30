@@ -275,13 +275,12 @@ const SpecialFeature = mongoose.model('SpecialFeature', specialFeatureSchema);
 
 const Laptop = mongoose.model('Laptop', laptopSchema);
 
-module.exports = {
-  Laptop,
-  Cpu,
-  Brand,
-  Vga,
-  RamSize,
-  StorageSize,
-  ScreenSize,
-  SpecialFeature
-};
+module.exports = Laptop;
+module.exports.Laptop = Laptop;
+module.exports.Cpu = Cpu;
+module.exports.Brand = Brand;
+module.exports.Vga = Vga;
+module.exports.RamSize = RamSize;
+module.exports.StorageSize = StorageSize;
+module.exports.ScreenSize = ScreenSize;
+module.exports.SpecialFeature = SpecialFeature;

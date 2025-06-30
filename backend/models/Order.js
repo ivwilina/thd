@@ -86,6 +86,17 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'confirmed', 'processing', 'shipping', 'delivered', 'cancelled'],
     default: 'pending'
+  },
+  processedBy: {
+    type: String,
+    ref: 'Employee'
+  },
+  processedAt: {
+    type: Date
+  },
+  cancelReason: {
+    type: String,
+    trim: true
   }
 }, {
   timestamps: true,
@@ -93,14 +104,37 @@ const orderSchema = new mongoose.Schema({
 });
 
 // Instance methods as defined in UML
-orderSchema.methods.updateOrderStatus = async function(newStatus) {
+orderSchema.methods.updateOrderStatus = async function(newStatus, employeeId = null) {
   this.status = newStatus;
+  if (employeeId) {
+    this.processedBy = employeeId;
+    this.processedAt = new Date();
+  }
   const result = await this.save();
   return !!result;
 };
 
-orderSchema.methods.completeOrder = async function() {
+orderSchema.methods.confirmOrder = async function(employeeId) {
+  this.status = 'confirmed';
+  this.processedBy = employeeId;
+  this.processedAt = new Date();
+  const result = await this.save();
+  return !!result;
+};
+
+orderSchema.methods.cancelOrder = async function(employeeId, reason = '') {
+  this.status = 'cancelled';
+  this.processedBy = employeeId;
+  this.processedAt = new Date();
+  this.cancelReason = reason;
+  const result = await this.save();
+  return !!result;
+};
+
+orderSchema.methods.completeOrder = async function(employeeId) {
   this.status = 'delivered';
+  this.processedBy = employeeId;
+  this.processedAt = new Date();
   const result = await this.save();
   return !!result;
 };

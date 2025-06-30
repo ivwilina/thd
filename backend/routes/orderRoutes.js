@@ -111,10 +111,26 @@ router.post('/', validateOrder, async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const order = await Order.createOrder(req.body);
-    res.status(201).json(order);
+    // Generate unique order ID
+    const orderId = 'ORD' + Date.now();
+    const orderData = {
+      ...req.body,
+      _id: orderId
+    };
+
+    const order = await Order.createOrder(orderData);
+    res.status(201).json({ 
+      success: true,
+      message: 'Đặt hàng thành công!',
+      order 
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error creating order:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Lỗi khi tạo đơn hàng',
+      error: error.message 
+    });
   }
 });
 
@@ -131,6 +147,79 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// PUT /api/orders/:id/confirm - Confirm order
+router.put('/:id/confirm', async (req, res) => {
+  try {
+    const order = await Order.getOrder(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (order.status !== 'pending') {
+      return res.status(400).json({ message: 'Order cannot be confirmed in current status' });
+    }
+
+    const employeeId = req.user?.id || 'system';
+    const success = await order.confirmOrder(employeeId);
+    
+    if (!success) {
+      return res.status(400).json({ message: 'Failed to confirm order' });
+    }
+
+    // Ghi log
+    await Log.create({
+      _id: `${order._id}_confirm_${Date.now()}`,
+      employeeId: employeeId,
+      action: `Xác nhận đơn hàng ${order._id}`,
+      timestamp: new Date()
+    });
+
+    res.json({ 
+      success: true,
+      message: 'Order confirmed successfully' 
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// PUT /api/orders/:id/cancel - Cancel order
+router.put('/:id/cancel', async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const order = await Order.getOrder(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (['delivered', 'cancelled'].includes(order.status)) {
+      return res.status(400).json({ message: 'Order cannot be cancelled in current status' });
+    }
+
+    const employeeId = req.user?.id || 'system';
+    const success = await order.cancelOrder(employeeId, reason);
+    
+    if (!success) {
+      return res.status(400).json({ message: 'Failed to cancel order' });
+    }
+
+    // Ghi log
+    await Log.create({
+      _id: `${order._id}_cancel_${Date.now()}`,
+      employeeId: employeeId,
+      action: `Hủy đơn hàng ${order._id}${reason ? ` - Lý do: ${reason}` : ''}`,
+      timestamp: new Date()
+    });
+
+    res.json({ 
+      success: true,
+      message: 'Order cancelled successfully' 
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // PUT /api/orders/:id/status - Update order status
 router.put('/:id/status', async (req, res) => {
   try {
@@ -140,10 +229,19 @@ router.put('/:id/status', async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
     
-    const success = await order.updateOrderStatus(status);
+    const employeeId = req.user?.id || 'system';
+    const success = await order.updateOrderStatus(status, employeeId);
     if (!success) {
       return res.status(400).json({ message: 'Failed to update order status' });
     }
+    
+    // Ghi log
+    await Log.create({
+      _id: `${order._id}_status_${Date.now()}`,
+      employeeId: employeeId,
+      action: `Cập nhật trạng thái đơn hàng ${order._id} thành ${status}`,
+      timestamp: new Date()
+    });
     
     res.json({ message: 'Order status updated successfully' });
   } catch (error) {
@@ -159,52 +257,79 @@ router.put('/:id/complete', async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    // Lấy thông tin nhân viên thực hiện (giả sử req.user.id là employeeId, cần middleware auth thực tế)
+    if (order.status === 'cancelled') {
+      return res.status(400).json({ message: 'Cannot complete cancelled order' });
+    }
+
+    if (order.status === 'delivered') {
+      return res.status(400).json({ message: 'Order is already completed' });
+    }
+
     const employeeId = req.user?.id || 'system';
 
     // Nếu là đơn sản phẩm thì trừ tồn kho
     if (order.type === 'product' || order.type === 'mixed') {
       for (const item of order.orderItems) {
-        // Tìm inventory theo productId và productType
-        const inventory = await Inventory.findOne({ productId: item.itemId, productType: item.itemType });
-        if (!inventory) {
-          return res.status(400).json({ message: `Inventory not found for product ${item.itemName}` });
+        if (item.itemType !== 'service') {
+          // Tìm inventory theo productId và productType
+          const inventory = await Inventory.findOne({ 
+            productId: item.itemId, 
+            productType: item.itemType 
+          });
+          
+          if (!inventory) {
+            return res.status(400).json({ 
+              message: `Inventory not found for product ${item.itemName}` 
+            });
+          }
+          
+          if (inventory.availableStock < item.quantity) {
+            return res.status(400).json({ 
+              message: `Not enough stock for product ${item.itemName}. Available: ${inventory.availableStock}, Required: ${item.quantity}` 
+            });
+          }
+          
+          // Trừ tồn kho
+          inventory.currentStock -= item.quantity;
+          inventory.availableStock = Math.max(0, inventory.currentStock - inventory.reservedStock);
+          inventory.lastSold = new Date();
+          
+          // Ghi nhận xuất kho
+          inventory.stockMovements.push({
+            type: 'OUT',
+            quantity: item.quantity,
+            reason: 'Order completed',
+            reference: order._id,
+            employeeId: employeeId,
+            date: new Date(),
+            notes: `Hoàn thành đơn hàng cho khách: ${order.customerName}`
+          });
+          
+          await inventory.save();
         }
-        if (inventory.availableStock < item.quantity) {
-          return res.status(400).json({ message: `Not enough stock for product ${item.itemName}` });
-        }
-        // Trừ tồn kho
-        inventory.currentStock -= item.quantity;
-        inventory.availableStock = Math.max(0, inventory.currentStock - inventory.reservedStock);
-        inventory.lastSold = new Date();
-        // Ghi nhận xuất kho
-        inventory.stockMovements.push({
-          type: 'OUT',
-          quantity: item.quantity,
-          reason: 'Order completed',
-          reference: order._id,
-          employeeId: employeeId,
-          date: new Date(),
-          notes: `Hoàn thành đơn hàng cho khách: ${order.customerName}`
-        });
-        await inventory.save();
       }
+    }
+
+    // Cập nhật trạng thái đơn hàng
+    const success = await order.completeOrder(employeeId);
+    if (!success) {
+      return res.status(400).json({ message: 'Failed to complete order' });
     }
 
     // Ghi log thao tác
     await Log.create({
-      _id: `${order._id}_${Date.now()}`,
+      _id: `${order._id}_complete_${Date.now()}`,
       employeeId: employeeId,
       action: `Hoàn thành đơn hàng ${order._id}`,
       timestamp: new Date()
     });
 
-    // Cập nhật trạng thái đơn hàng
-    order.status = 'delivered';
-    await order.save();
-
-    res.json({ message: 'Order completed successfully' });
+    res.json({ 
+      success: true,
+      message: 'Order completed successfully' 
+    });
   } catch (error) {
+    console.error('Error completing order:', error);
     res.status(500).json({ message: error.message });
   }
 });

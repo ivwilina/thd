@@ -173,9 +173,8 @@ const PrintFeature = mongoose.model('PrintFeature', printFeatureSchema);
 
 const Printer = mongoose.model('Printer', printerSchema);
 
-module.exports = {
-  Printer,
-  PrinterType,
-  PrinterBrand,
-  PrintFeature
-};
+module.exports = Printer;
+module.exports.Printer = Printer;
+module.exports.PrinterType = PrinterType;
+module.exports.PrinterBrand = PrinterBrand;
+module.exports.PrintFeature = PrintFeature;

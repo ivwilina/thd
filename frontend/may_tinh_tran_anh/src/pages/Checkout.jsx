@@ -61,36 +61,54 @@ const Checkout = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.fullName || !formData.email || !formData.phone || !formData.address) {
+      alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
+      return;
+    }
+
     try {
       // Chuẩn bị dữ liệu đơn hàng
       const orderItems = cart.map(item => ({
-        itemType: item.category === 'Laptop' ? 'laptop' : 'printer',
+        itemType: item.category === 'Laptop' ? 'laptop' : (item.category === 'Máy In' ? 'printer' : 'service'),
         itemId: item.id,
         itemName: item.name,
         quantity: item.quantity || 1,
         unitPrice: parseFloat(item.discountPrice?.replace(/[^0-9]/g, '')) || parseFloat(item.price?.replace(/[^0-9]/g, '')) || 0,
         totalPrice: (parseFloat(item.discountPrice?.replace(/[^0-9]/g, '')) || parseFloat(item.price?.replace(/[^0-9]/g, '')) || 0) * (item.quantity || 1)
       }));
+
+      const totalPrice = calculateTotal();
+      
       const orderData = {
         customerName: formData.fullName,
         customerPhoneNumber: formData.phone,
         customerEmail: formData.email,
         customerAddress: formData.address,
         billingMethod: formData.paymentMethod,
-        note: formData.content,
+        note: formData.content || '',
         type: 'product',
         orderItems,
-        finalPrice: calculateTotal()
+        finalPrice: totalPrice
       };
+
+      console.log('Sending order data:', orderData);
+
       // Gửi đơn hàng lên backend
-      await apiService.post('/orders', orderData);
-      // Clear cart và báo thành công
-      localStorage.removeItem('cart');
-      alert('Đặt hàng thành công! Cảm ơn quý khách.');
-      window.location.href = '/';
+      const response = await apiService.post('/orders', orderData);
+      
+      if (response.success) {
+        // Clear cart và báo thành công
+        localStorage.removeItem('cart');
+        alert(`Đặt hàng thành công! Mã đơn hàng: ${response.order._id}. Cảm ơn quý khách.`);
+        window.location.href = '/';
+      } else {
+        throw new Error(response.message || 'Đặt hàng thất bại');
+      }
     } catch (err) {
       console.error('Có lỗi khi đặt hàng:', err);
-      alert('Có lỗi khi đặt hàng. Vui lòng thử lại!');
+      alert('Có lỗi khi đặt hàng: ' + (err.response?.data?.message || err.message || 'Vui lòng thử lại!'));
     }
   };
 

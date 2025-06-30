@@ -1,7 +1,59 @@
-# May Tinh Tran Anh - Complete System
+# Hệ Thống Quản Lý Máy Tính Trần Anh
 
-## Overview
-Hệ thống cửa hàng máy tính Trần Anh với frontend React và backend Node.js/Express/MongoDB theo biểu đồ UML class diagram.
+## 🎯 Tổng quan
+Hệ thống quản lý cửa hàng máy tính hoàn chỉnh với:
+- **Frontend**: React.js với giao diện hiện đại, responsive
+- **Backend**: Node.js + Express + MongoDB
+- **Tính năng**: Quản lý sản phẩm, tồn kho, đơn hàng, nhân viên, dịch vụ
+
+## 🚀 Cài đặt nhanh
+
+### Cách 1: Sử dụng Quick Start Script (Khuyến nghị)
+
+**Windows:**
+```cmd
+quickStart.bat
+```
+
+**Linux/macOS:**
+```bash
+chmod +x quickStart.sh
+./quickStart.sh
+```
+
+### Cách 2: Cài đặt thủ công
+
+**Xem hướng dẫn chi tiết tại: [INSTALL.md](./INSTALL.md)**
+
+```bash
+# 1. Cài đặt backend
+cd backend && npm install
+
+# 2. Cài đặt frontend  
+cd ../frontend/may_tinh_tran_anh && npm install
+
+# 3. Setup dữ liệu mẫu
+cd ../../backend && node setupComplete.js
+
+# 4. Khởi chạy
+npm run dev  # Backend (port 3001)
+# Terminal mới:
+cd ../frontend/may_tinh_tran_anh && npm start  # Frontend (port 3000)
+```
+
+## 👥 Tài khoản mặc định
+- **Admin**: admin@maytinhrananh.com / admin123
+- **Staff**: staff1@maytinhrananh.com / staff123  
+- **Manager**: manager1@maytinhrananh.com / manager123
+
+## 🔧 Scripts hỗ trợ
+
+| Script | Mô tả |
+|--------|-------|
+| `quickStart.bat/sh` | Script khởi chạy nhanh với menu tương tác |
+| `backend/setupComplete.js` | Tạo dữ liệu mẫu (sản phẩm, tài khoản, đơn hàng) |
+| `backend/healthCheck.js` | Kiểm tra tình trạng hệ thống |
+| `cleanup.bat/sh` | Xóa file test và báo cáo không cần thiết |
 
 ## Project Structure
 ```
