@@ -1,0 +1,1526 @@
+import React, { useState, useEffect } from 'react';
+import AdminNavBar from '../components/AdminNavBar';
+import apiService from '../services/apiService';
+import '../assets/unifiedAdminStaff.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faChartBar,
+  faChartPie,
+  faChartLine,
+  faFileExport,
+  faSync,
+  faCalendarAlt,
+  faShoppingCart,
+  faBox,
+  faBoxes,
+  faWarehouse,
+  faMoneyBillWave,
+  faPercentage,
+  faArrowUp,
+  faArrowDown,
+  faPrint,
+  faSearch,
+  faFilter,
+  faChartArea
+} from '@fortawesome/free-solid-svg-icons';
+
+const AdminReports = () => {
+  const [reportType, setReportType] = useState('sales');
+  const [dateRange, setDateRange] = useState('month');
+  const [reportData, setReportData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [realData, setRealData] = useState({
+    orders: [],
+    products: [],
+    inventory: [],
+    services: [],
+    employees: []
+  });
+  const [customDateRange, setCustomDateRange] = useState({
+    startDate: new Date(new Date().setDate(1)).toISOString().split('T')[0], // First day of current month
+    endDate: new Date().toISOString().split('T')[0] // Today
+  });
+  const [useCustomDateRange, setUseCustomDateRange] = useState(false);
+
+  const reportTypes = [
+    { value: 'sales', label: 'Báo cáo bán hàng', icon: faChartBar },
+    { value: 'inventory', label: 'Báo cáo tồn kho', icon: faBoxes },
+    { value: 'orders', label: 'Báo cáo đơn hàng', icon: faShoppingCart },
+    { value: 'revenue', label: 'Báo cáo doanh thu', icon: faMoneyBillWave },
+    { value: 'services', label: 'Báo cáo dịch vụ', icon: faChartLine }
+  ];
+
+  const dateRanges = [
+    { value: 'today', label: 'Hôm nay' },
+    { value: 'week', label: 'Tuần này' },
+    { value: 'month', label: 'Tháng này' },
+    { value: 'quarter', label: 'Quý này' },
+    { value: 'year', label: 'Năm này' },
+    { value: 'custom', label: 'Tùy chỉnh' }
+  ];
+
+  useEffect(() => {
+    fetchRealData();
+  }, []);
+
+  useEffect(() => {
+    generateReport();
+  }, [reportType, dateRange, customDateRange, useCustomDateRange, realData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchRealData = async () => {
+    try {
+      setLoading(true);
+      const [ordersRes, laptopsRes, printersRes, inventoryRes, servicesRes, employeesRes] = await Promise.all([
+        apiService.getOrders().catch(() => ({ orders: [] })),
+        apiService.getLaptops().catch(() => []),
+        apiService.getPrinters().catch(() => []),
+        apiService.get('/inventory').catch(() => []),
+        apiService.getServices().catch(() => []),
+        apiService.getEmployees().catch(() => [])
+      ]);
+
+      const orders = Array.isArray(ordersRes) ? ordersRes : (ordersRes.orders || []);
+      const laptops = Array.isArray(laptopsRes) ? laptopsRes : (laptopsRes.laptops || []);
+      const printers = Array.isArray(printersRes) ? printersRes : (printersRes.printers || []);
+      const inventory = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes.inventories || []);
+      const services = Array.isArray(servicesRes) ? servicesRes : (servicesRes.services || []);
+      const employees = Array.isArray(employeesRes) ? employeesRes : (employeesRes.employees || []);
+
+      setRealData({
+        orders,
+        products: [...laptops, ...printers],
+        inventory,
+        services,
+        employees
+      });
+      
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching real data:', error);
+      setError('Không thể tải dữ liệu báo cáo');
+      
+      // Create sample data if API fails
+      setRealData({
+        orders: generateSampleOrders(),
+        products: generateSampleProducts(),
+        inventory: generateSampleInventory(),
+        services: generateSampleServices(),
+        employees: generateSampleEmployees()
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDateRangeLabel = () => {
+    if (useCustomDateRange) {
+      return `${formatDate(customDateRange.startDate)} đến ${formatDate(customDateRange.endDate)}`;
+    }
+    
+    const now = new Date();
+    switch (dateRange) {
+      case 'today':
+        return `Hôm nay (${formatDate(now)})`;
+      case 'week':
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        return `Tuần này (${formatDate(startOfWeek)} - ${formatDate(now)})`;
+      case 'month':
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        return `Tháng ${now.getMonth() + 1}/${now.getFullYear()} (${formatDate(startOfMonth)} - ${formatDate(now)})`;
+      case 'quarter':
+        const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+        const startOfQuarter = new Date(now.getFullYear(), quarterMonth, 1);
+        return `Quý ${Math.floor(now.getMonth() / 3) + 1}/${now.getFullYear()} (${formatDate(startOfQuarter)} - ${formatDate(now)})`;
+      case 'year':
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        return `Năm ${now.getFullYear()} (${formatDate(startOfYear)} - ${formatDate(now)})`;
+      default:
+        return 'Không xác định';
+    }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+  };
+
+  const getDateRangeFilter = () => {
+    if (useCustomDateRange) {
+      return {
+        startDate: new Date(customDateRange.startDate),
+        endDate: new Date(customDateRange.endDate)
+      };
+    }
+    
+    const now = new Date();
+    switch (dateRange) {
+      case 'today':
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        return { startDate: startOfDay, endDate: now };
+      case 'week':
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        return { startDate: startOfWeek, endDate: now };
+      case 'month':
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        return { startDate: startOfMonth, endDate: now };
+      case 'quarter':
+        const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+        const startOfQuarter = new Date(now.getFullYear(), quarterMonth, 1);
+        return { startDate: startOfQuarter, endDate: now };
+      case 'year':
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        return { startDate: startOfYear, endDate: now };
+      default:
+        return { startDate: new Date(0), endDate: now };
+    }
+  };
+
+  const filterByDateRange = (items, dateField = 'createdAt') => {
+    const { startDate, endDate } = getDateRangeFilter();
+    return items.filter(item => {
+      const itemDate = new Date(item[dateField]);
+      return itemDate >= startDate && itemDate <= endDate;
+    });
+  };
+
+  const generateReport = () => {
+    setLoading(true);
+    
+    try {
+      const { orders, products, inventory, services } = realData;
+      
+      let filteredOrders = filterByDateRange(orders);
+      let reportResult = null;
+      
+      switch (reportType) {
+        case 'sales':
+          reportResult = generateSalesReport(filteredOrders, products);
+          break;
+        case 'inventory':
+          reportResult = generateInventoryReport(inventory, products);
+          break;
+        case 'orders':
+          reportResult = generateOrdersReport(filteredOrders);
+          break;
+        case 'revenue':
+          reportResult = generateRevenueReport(filteredOrders, products);
+          break;
+        case 'services':
+          const filteredServices = filterByDateRange(
+            orders.filter(order => order.type === 'service'), 
+            'createdAt'
+          );
+          reportResult = generateServicesReport(filteredServices, services);
+          break;
+        default:
+          reportResult = null;
+      }
+      
+      setReportData(reportResult);
+    } catch (err) {
+      console.error('Error generating report:', err);
+      setError('Lỗi khi tạo báo cáo: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateSalesReport = (filteredOrders, products) => {
+    // Calculate sales metrics
+    const totalSales = filteredOrders.length;
+    const completedSales = filteredOrders.filter(o => o.status === 'completed' || o.status === 'delivered').length;
+    const totalRevenue = filteredOrders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
+    
+    // Calculate product sales by category
+    const productSales = {};
+    filteredOrders.forEach(order => {
+      if (order.items) {
+        order.items.forEach(item => {
+          const productType = item.productType || 'other';
+          if (!productSales[productType]) {
+            productSales[productType] = { count: 0, revenue: 0 };
+          }
+          productSales[productType].count += (item.quantity || 1);
+          productSales[productType].revenue += (item.price || 0) * (item.quantity || 1);
+        });
+      }
+    });
+    
+    // Create charts data
+    const chartsByCategory = Object.keys(productSales).map(category => ({
+      label: category === 'laptop' ? 'Laptop' : 
+             category === 'printer' ? 'Máy in' : 
+             category === 'service' ? 'Dịch vụ' : 'Khác',
+      value: productSales[category].count,
+      revenue: productSales[category].revenue,
+      color: category === 'laptop' ? '#007bff' : 
+             category === 'printer' ? '#28a745' : 
+             category === 'service' ? '#6f42c1' : '#ffc107'
+    }));
+    
+    // Calculate growth rate (mocked for now)
+    const growthRate = 12.5;
+    
+    // Find top selling product
+    let topProduct = { name: 'Không có', count: 0 };
+    const productCounts = {};
+    
+    filteredOrders.forEach(order => {
+      if (order.items) {
+        order.items.forEach(item => {
+          const productId = item.productId;
+          if (!productCounts[productId]) {
+            productCounts[productId] = { 
+              count: 0, 
+              name: item.productName || 'Không có tên',
+              revenue: 0
+            };
+          }
+          productCounts[productId].count += (item.quantity || 1);
+          productCounts[productId].revenue += (item.price || 0) * (item.quantity || 1);
+        });
+      }
+    });
+    
+    Object.keys(productCounts).forEach(productId => {
+      if (productCounts[productId].count > topProduct.count) {
+        topProduct = { 
+          name: productCounts[productId].name, 
+          count: productCounts[productId].count,
+          revenue: productCounts[productId].revenue
+        };
+      }
+    });
+    
+    // Create top products list
+    const topProducts = Object.keys(productCounts)
+      .map(productId => ({ 
+        id: productId,
+        ...productCounts[productId]
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    
+    return {
+      title: 'Báo cáo bán hàng',
+      summary: {
+        totalSales,
+        completedSales,
+        totalRevenue,
+        topProduct: topProduct.name,
+        growthRate
+      },
+      charts: chartsByCategory,
+      topProducts,
+      dateRange: getDateRangeLabel()
+    };
+  };
+
+  const generateInventoryReport = (inventory, products) => {
+    // Calculate inventory metrics
+    const totalInventoryItems = inventory.length || products.length;
+    
+    // Calculate low stock and out of stock
+    const lowStockItems = inventory.filter(item => 
+      (item.availableStock || item.currentStock || 0) > 0 && 
+      (item.availableStock || item.currentStock || 0) <= (item.minimumStock || 5)
+    ).length;
+    
+    const outOfStockItems = inventory.filter(item => 
+      (item.availableStock || item.currentStock || 0) === 0
+    ).length;
+    
+    // Calculate total inventory value
+    const inventoryValue = inventory.reduce((sum, item) => {
+      const product = products.find(p => p._id === item.productId);
+      const price = product ? (product.price || 0) : 0;
+      return sum + (price * (item.currentStock || 0));
+    }, 0);
+    
+    // Create charts data
+    const charts = [
+      { label: 'Còn hàng', value: totalInventoryItems - lowStockItems - outOfStockItems, color: '#28a745' },
+      { label: 'Sắp hết', value: lowStockItems, color: '#ffc107' },
+      { label: 'Hết hàng', value: outOfStockItems, color: '#dc3545' }
+    ];
+    
+    // Calculate inventory by category
+    const inventoryByType = {};
+    
+    inventory.forEach(item => {
+      const productType = item.productType || 'other';
+      if (!inventoryByType[productType]) {
+        inventoryByType[productType] = { 
+          count: 0, 
+          stock: 0, 
+          value: 0,
+          lowStock: 0,
+          outOfStock: 0
+        };
+      }
+      
+      inventoryByType[productType].count++;
+      inventoryByType[productType].stock += (item.currentStock || 0);
+      
+      const product = products.find(p => p._id === item.productId);
+      const price = product ? (product.price || 0) : 0;
+      inventoryByType[productType].value += price * (item.currentStock || 0);
+      
+      if ((item.availableStock || item.currentStock || 0) === 0) {
+        inventoryByType[productType].outOfStock++;
+      } else if ((item.availableStock || item.currentStock || 0) <= (item.minimumStock || 5)) {
+        inventoryByType[productType].lowStock++;
+      }
+    });
+    
+    // Create inventory by type list
+    const inventoryByCategory = Object.keys(inventoryByType).map(type => ({
+      type: type === 'laptop' ? 'Laptop' : 
+            type === 'printer' ? 'Máy in' : 
+            type === 'service' ? 'Dịch vụ' : 'Khác',
+      ...inventoryByType[type]
+    }));
+    
+    // Generate top value products
+    const topValueProducts = products
+      .map(product => {
+        const inventoryItem = inventory.find(item => item.productId === product._id);
+        const stock = inventoryItem ? (inventoryItem.currentStock || 0) : 0;
+        return {
+          id: product._id,
+          name: product.displayName || product.description || 'Không có tên',
+          type: product.cpu ? 'Laptop' : 'Máy in',
+          stock,
+          price: product.price || 0,
+          value: (product.price || 0) * stock
+        };
+      })
+      .filter(item => item.stock > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+    
+    return {
+      title: 'Báo cáo tồn kho',
+      summary: {
+        totalItems: totalInventoryItems,
+        lowStockItems,
+        outOfStockItems,
+        inventoryValue
+      },
+      charts,
+      inventoryByCategory,
+      topValueProducts
+    };
+  };
+
+  const generateOrdersReport = (filteredOrders) => {
+    // Calculate order metrics
+    const totalOrders = filteredOrders.length;
+    const completedOrders = filteredOrders.filter(o => o.status === 'completed' || o.status === 'delivered').length;
+    const pendingOrders = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing').length;
+    const cancelledOrders = filteredOrders.filter(o => o.status === 'cancelled').length;
+    
+    // Create charts data
+    const charts = [
+      { label: 'Hoàn thành', value: completedOrders, color: '#28a745' },
+      { label: 'Đang xử lý', value: pendingOrders, color: '#007bff' },
+      { label: 'Đã hủy', value: cancelledOrders, color: '#dc3545' }
+    ];
+    
+    // Calculate average order value
+    const totalValue = filteredOrders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
+    const averageOrderValue = totalOrders > 0 ? totalValue / totalOrders : 0;
+    
+    // Calculate orders by date
+    const ordersByDate = {};
+    filteredOrders.forEach(order => {
+      const date = new Date(order.createdAt).toLocaleDateString('vi-VN');
+      if (!ordersByDate[date]) {
+        ordersByDate[date] = { 
+          count: 0, 
+          value: 0, 
+          completed: 0, 
+          cancelled: 0
+        };
+      }
+      
+      ordersByDate[date].count++;
+      ordersByDate[date].value += (parseFloat(order.totalAmount) || 0);
+      
+      if (order.status === 'completed' || order.status === 'delivered') {
+        ordersByDate[date].completed++;
+      } else if (order.status === 'cancelled') {
+        ordersByDate[date].cancelled++;
+      }
+    });
+    
+    // Create time series data
+    const timeSeriesData = Object.keys(ordersByDate)
+      .sort((a, b) => new Date(a) - new Date(b))
+      .map(date => ({
+        date,
+        ...ordersByDate[date]
+      }));
+    
+    // Calculate conversion rate (mocked for now)
+    const conversionRate = 65.3; // percent
+    
+    return {
+      title: 'Báo cáo đơn hàng',
+      summary: {
+        totalOrders,
+        completedOrders,
+        pendingOrders,
+        cancelledOrders,
+        averageOrderValue,
+        conversionRate
+      },
+      charts,
+      timeSeriesData,
+      dateRange: getDateRangeLabel()
+    };
+  };
+
+  const generateRevenueReport = (filteredOrders, products) => {
+    // Calculate revenue metrics
+    const totalRevenue = filteredOrders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
+    const completedRevenue = filteredOrders
+      .filter(o => o.status === 'completed' || o.status === 'delivered')
+      .reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
+    
+    // Calculate revenue by product type
+    const revenueByType = {};
+    filteredOrders.forEach(order => {
+      if (order.items) {
+        order.items.forEach(item => {
+          const productType = item.productType || 'other';
+          if (!revenueByType[productType]) {
+            revenueByType[productType] = { count: 0, revenue: 0 };
+          }
+          revenueByType[productType].count += (item.quantity || 1);
+          revenueByType[productType].revenue += (item.price || 0) * (item.quantity || 1);
+        });
+      }
+    });
+    
+    // Create charts data
+    const charts = Object.keys(revenueByType).map(type => ({
+      label: type === 'laptop' ? 'Laptop' : 
+             type === 'printer' ? 'Máy in' : 
+             type === 'service' ? 'Dịch vụ' : 'Khác',
+      value: revenueByType[type].revenue,
+      count: revenueByType[type].count,
+      color: type === 'laptop' ? '#007bff' : 
+             type === 'printer' ? '#28a745' : 
+             type === 'service' ? '#6f42c1' : '#ffc107'
+    }));
+    
+    // Calculate revenue by date
+    const revenueByDate = {};
+    filteredOrders.forEach(order => {
+      const date = new Date(order.createdAt).toLocaleDateString('vi-VN');
+      if (!revenueByDate[date]) {
+        revenueByDate[date] = { total: 0, count: 0 };
+      }
+      
+      revenueByDate[date].total += (parseFloat(order.totalAmount) || 0);
+      revenueByDate[date].count++;
+    });
+    
+    // Create time series data
+    const timeSeriesData = Object.keys(revenueByDate)
+      .sort((a, b) => new Date(a) - new Date(b))
+      .map(date => ({
+        date,
+        revenue: revenueByDate[date].total,
+        orders: revenueByDate[date].count
+      }));
+    
+    // Calculate growth rate (mocked for now)
+    const growthRate = 8.7; // percent
+    
+    return {
+      title: 'Báo cáo doanh thu',
+      summary: {
+        totalRevenue,
+        completedRevenue,
+        ordersCount: filteredOrders.length,
+        growthRate
+      },
+      charts,
+      timeSeriesData,
+      dateRange: getDateRangeLabel()
+    };
+  };
+
+  const generateServicesReport = (filteredServices, services) => {
+    // Calculate service metrics
+    const totalServices = filteredServices.length;
+    const completedServices = filteredServices.filter(s => s.status === 'completed').length;
+    const pendingServices = filteredServices.filter(s => s.status === 'pending' || s.status === 'processing').length;
+    const cancelledServices = filteredServices.filter(s => s.status === 'cancelled').length;
+    
+    // Calculate total service revenue
+    const totalRevenue = filteredServices.reduce((sum, service) => sum + (parseFloat(service.totalAmount) || 0), 0);
+    
+    // Create charts data
+    const charts = [
+      { label: 'Hoàn thành', value: completedServices, color: '#28a745' },
+      { label: 'Đang xử lý', value: pendingServices, color: '#007bff' },
+      { label: 'Đã hủy', value: cancelledServices, color: '#dc3545' }
+    ];
+    
+    // Calculate service by type
+    const servicesByType = {};
+    filteredServices.forEach(service => {
+      if (service.items) {
+        service.items.forEach(item => {
+          const serviceType = item.serviceType || 'other';
+          if (!servicesByType[serviceType]) {
+            servicesByType[serviceType] = { count: 0, revenue: 0 };
+          }
+          servicesByType[serviceType].count++;
+          servicesByType[serviceType].revenue += (item.price || 0);
+        });
+      }
+    });
+    
+    // Create services by type data
+    const serviceTypeData = Object.keys(servicesByType).map(type => ({
+      type: type === 'repair' ? 'Sửa chữa' : 
+            type === 'installation' ? 'Lắp đặt' : 
+            type === 'maintenance' ? 'Bảo trì' : 'Khác',
+      ...servicesByType[type]
+    }));
+    
+    // Calculate customer satisfaction rate (mocked for now)
+    const satisfactionRate = 92.5; // percent
+    
+    return {
+      title: 'Báo cáo dịch vụ',
+      summary: {
+        totalServices,
+        completedServices,
+        pendingServices,
+        cancelledServices,
+        totalRevenue,
+        satisfactionRate
+      },
+      charts,
+      serviceTypeData,
+      dateRange: getDateRangeLabel()
+    };
+  };
+
+  // Helper functions for sample data
+  function generateSampleOrders() {
+    const statuses = ['pending', 'processing', 'completed', 'delivered', 'cancelled'];
+    const orders = [];
+    
+    for (let i = 1; i <= 50; i++) {
+      const orderItems = [];
+      const itemCount = Math.floor(Math.random() * 3) + 1;
+      let totalAmount = 0;
+      
+      for (let j = 1; j <= itemCount; j++) {
+        const isLaptop = Math.random() > 0.3;
+        const price = isLaptop ? 
+          Math.floor(Math.random() * 10000000) + 5000000 : 
+          Math.floor(Math.random() * 5000000) + 1000000;
+        const quantity = Math.floor(Math.random() * 2) + 1;
+        
+        totalAmount += price * quantity;
+        
+        orderItems.push({
+          productId: `PROD${Math.floor(Math.random() * 1000)}`,
+          productName: isLaptop ? `Laptop ${['Dell', 'HP', 'Asus'][Math.floor(Math.random() * 3)]}` : 
+                                  `Máy in ${['Canon', 'Epson', 'HP'][Math.floor(Math.random() * 3)]}`,
+          productType: isLaptop ? 'laptop' : 'printer',
+          price,
+          quantity
+        });
+      }
+      
+      const date = new Date();
+      date.setDate(date.getDate() - Math.floor(Math.random() * 60));
+      
+      orders.push({
+        _id: `ORD${i.toString().padStart(4, '0')}`,
+        customerName: `Khách hàng ${i}`,
+        totalAmount,
+        status: statuses[Math.floor(Math.random() * statuses.length)],
+        createdAt: date.toISOString(),
+        items: orderItems
+      });
+    }
+    
+    return orders;
+  }
+
+  function generateSampleProducts() {
+    const products = [];
+    
+    // Laptops
+    for (let i = 1; i <= 20; i++) {
+      products.push({
+        _id: `LAP${i.toString().padStart(4, '0')}`,
+        displayName: `Laptop ${['Dell', 'HP', 'Asus'][Math.floor(Math.random() * 3)]} Model ${i}`,
+        cpu: `Intel Core i${Math.floor(Math.random() * 5) + 3}`,
+        price: Math.floor(Math.random() * 10000000) + 5000000,
+        stock: Math.floor(Math.random() * 10)
+      });
+    }
+    
+    // Printers
+    for (let i = 1; i <= 15; i++) {
+      products.push({
+        _id: `PRN${i.toString().padStart(4, '0')}`,
+        description: `Máy in ${['Canon', 'Epson', 'HP'][Math.floor(Math.random() * 3)]} Model ${i}`,
+        printType: ['Laser', 'Inkjet', 'Dot Matrix'][Math.floor(Math.random() * 3)],
+        price: Math.floor(Math.random() * 5000000) + 1000000,
+        stock: Math.floor(Math.random() * 10)
+      });
+    }
+    
+    return products;
+  }
+
+  function generateSampleInventory() {
+    const inventory = [];
+    const products = generateSampleProducts();
+    
+    products.forEach(product => {
+      inventory.push({
+        productId: product._id,
+        productType: product._id.startsWith('LAP') ? 'laptop' : 'printer',
+        productInfo: {
+          name: product.displayName || product.description,
+          brand: product._id.startsWith('LAP') ? 
+            product.displayName.split(' ')[1] : 
+            product.description.split(' ')[2]
+        },
+        currentStock: product.stock,
+        reservedStock: Math.floor(Math.random() * 3),
+        availableStock: product.stock - Math.floor(Math.random() * 3),
+        minimumStock: 5,
+        location: {
+          warehouse: ['Kho A', 'Kho B', 'Kho C'][Math.floor(Math.random() * 3)],
+          shelf: `${['A', 'B', 'C'][Math.floor(Math.random() * 3)]}-${Math.floor(Math.random() * 10) + 1}`
+        }
+      });
+    });
+    
+    return inventory;
+  }
+
+  function generateSampleServices() {
+    const services = [];
+    
+    for (let i = 1; i <= 10; i++) {
+      services.push({
+        _id: `SRV${i.toString().padStart(4, '0')}`,
+        name: `Dịch vụ ${['Sửa chữa', 'Bảo trì', 'Lắp đặt'][Math.floor(Math.random() * 3)]} ${i}`,
+        description: `Mô tả chi tiết về dịch vụ ${i}`,
+        type: ['repair', 'maintenance', 'installation'][Math.floor(Math.random() * 3)],
+        priceMin: Math.floor(Math.random() * 500000) + 100000,
+        priceMax: Math.floor(Math.random() * 1000000) + 600000,
+        isActive: Math.random() > 0.2
+      });
+    }
+    
+    return services;
+  }
+
+  function generateSampleEmployees() {
+    const employees = [];
+    
+    for (let i = 1; i <= 5; i++) {
+      employees.push({
+        _id: `EMP${i.toString().padStart(4, '0')}`,
+        name: `Nhân viên ${i}`,
+        email: `employee${i}@example.com`,
+        phoneNumber: `09${Math.floor(Math.random() * 90000000) + 10000000}`,
+        role: ['admin', 'manager', 'staff'][Math.floor(Math.random() * 3)],
+        isActive: Math.random() > 0.1
+      });
+    }
+    
+    return employees;
+  }
+
+  const renderSalesReport = () => {
+    if (!reportData) return null;
+    
+    const { summary, charts, topProducts } = reportData;
+    
+    return (
+      <div className="report-content">
+        <div className="report-summary-cards">
+          <div className="summary-card">
+            <div className="summary-icon">
+              <FontAwesomeIcon icon={faShoppingCart} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.totalSales}</div>
+              <div className="summary-label">Tổng đơn hàng</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon success">
+              <FontAwesomeIcon icon={faCheckCircle} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.completedSales}</div>
+              <div className="summary-label">Đơn hoàn thành</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon warning">
+              <FontAwesomeIcon icon={faMoneyBillWave} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.totalRevenue.toLocaleString('vi-VN')} đ</div>
+              <div className="summary-label">Doanh thu</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon info">
+              <FontAwesomeIcon icon={faPercentage} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">
+                {summary.growthRate}% <FontAwesomeIcon icon={faArrowUp} size="sm" />
+              </div>
+              <div className="summary-label">Tăng trưởng</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="report-details">
+          <div className="report-chart-section">
+            <h3>Phân tích bán hàng theo danh mục</h3>
+            <div className="chart-container">
+              <div className="bar-chart">
+                {charts.map((item, index) => (
+                  <div className="chart-item" key={index}>
+                    <div className="chart-label">{item.label}</div>
+                    <div className="chart-bar-container">
+                      <div 
+                        className="chart-bar" 
+                        style={{ 
+                          width: `${(item.value / Math.max(...charts.map(c => c.value)) * 100) || 0}%`,
+                          backgroundColor: item.color 
+                        }}
+                      ></div>
+                    </div>
+                    <div className="chart-value">{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <div className="report-table-section">
+            <h3>Top 5 sản phẩm bán chạy</h3>
+            {topProducts && topProducts.length > 0 ? (
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>Sản phẩm</th>
+                    <th>Số lượng bán</th>
+                    <th>Doanh thu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topProducts.map((product, index) => (
+                    <tr key={index}>
+                      <td>{product.name}</td>
+                      <td>{product.count}</td>
+                      <td>{product.revenue.toLocaleString('vi-VN')} đ</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="no-data">Không có dữ liệu</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderInventoryReport = () => {
+    if (!reportData) return null;
+    
+    const { summary, charts, inventoryByCategory, topValueProducts } = reportData;
+    
+    return (
+      <div className="report-content">
+        <div className="report-summary-cards">
+          <div className="summary-card">
+            <div className="summary-icon">
+              <FontAwesomeIcon icon={faBoxes} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.totalItems}</div>
+              <div className="summary-label">Sản phẩm</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon warning">
+              <FontAwesomeIcon icon={faExclamationTriangle} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.lowStockItems}</div>
+              <div className="summary-label">Sắp hết hàng</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon danger">
+              <FontAwesomeIcon icon={faBox} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.outOfStockItems}</div>
+              <div className="summary-label">Hết hàng</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon success">
+              <FontAwesomeIcon icon={faMoneyBillWave} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.inventoryValue.toLocaleString('vi-VN')} đ</div>
+              <div className="summary-label">Giá trị tồn kho</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="report-details">
+          <div className="report-chart-section">
+            <h3>Phân tích trạng thái tồn kho</h3>
+            <div className="chart-container">
+              <div className="pie-chart-container">
+                <div className="pie-chart-legend">
+                  {charts.map((item, index) => (
+                    <div className="legend-item" key={index}>
+                      <div className="color-box" style={{ backgroundColor: item.color }}></div>
+                      <div className="legend-label">{item.label}: {item.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="pie-chart">
+                  {charts.map((item, index) => {
+                    const total = charts.reduce((sum, chart) => sum + chart.value, 0);
+                    const percentage = total > 0 ? (item.value / total) * 100 : 0;
+                    
+                    return (
+                      <div 
+                        key={index}
+                        className="pie-segment"
+                        style={{
+                          backgroundColor: item.color,
+                          width: '100%',
+                          height: '100%',
+                          clipPath: `polygon(50% 50%, 100% 0, 100% 100%)`
+                        }}
+                      ></div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="report-table-section">
+            <h3>Phân tích theo danh mục</h3>
+            {inventoryByCategory && inventoryByCategory.length > 0 ? (
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>Danh mục</th>
+                    <th>Số SP</th>
+                    <th>Tồn kho</th>
+                    <th>Giá trị</th>
+                    <th>Sắp hết</th>
+                    <th>Hết hàng</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inventoryByCategory.map((category, index) => (
+                    <tr key={index}>
+                      <td>{category.type}</td>
+                      <td>{category.count}</td>
+                      <td>{category.stock}</td>
+                      <td>{category.value.toLocaleString('vi-VN')} đ</td>
+                      <td>{category.lowStock}</td>
+                      <td>{category.outOfStock}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="no-data">Không có dữ liệu</p>
+            )}
+          </div>
+          
+          <div className="report-table-section">
+            <h3>Top 5 sản phẩm giá trị cao</h3>
+            {topValueProducts && topValueProducts.length > 0 ? (
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>Sản phẩm</th>
+                    <th>Loại</th>
+                    <th>Tồn kho</th>
+                    <th>Giá trị</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topValueProducts.map((product, index) => (
+                    <tr key={index}>
+                      <td>{product.name}</td>
+                      <td>{product.type}</td>
+                      <td>{product.stock}</td>
+                      <td>{product.value.toLocaleString('vi-VN')} đ</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="no-data">Không có dữ liệu</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderOrdersReport = () => {
+    if (!reportData) return null;
+    
+    const { summary, charts, timeSeriesData } = reportData;
+    
+    return (
+      <div className="report-content">
+        <div className="report-summary-cards">
+          <div className="summary-card">
+            <div className="summary-icon">
+              <FontAwesomeIcon icon={faShoppingCart} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.totalOrders}</div>
+              <div className="summary-label">Tổng đơn hàng</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon success">
+              <FontAwesomeIcon icon={faCheckCircle} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.completedOrders}</div>
+              <div className="summary-label">Hoàn thành</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon warning">
+              <FontAwesomeIcon icon={faBox} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.pendingOrders}</div>
+              <div className="summary-label">Đang xử lý</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon danger">
+              <FontAwesomeIcon icon={faTimesCircle} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.cancelledOrders}</div>
+              <div className="summary-label">Đã hủy</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="report-summary-cards">
+          <div className="summary-card wide">
+            <div className="summary-icon info">
+              <FontAwesomeIcon icon={faMoneyBillWave} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.averageOrderValue.toLocaleString('vi-VN')} đ</div>
+              <div className="summary-label">Giá trị đơn hàng trung bình</div>
+            </div>
+          </div>
+          
+          <div className="summary-card wide">
+            <div className="summary-icon success">
+              <FontAwesomeIcon icon={faPercentage} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.conversionRate}%</div>
+              <div className="summary-label">Tỷ lệ chuyển đổi</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="report-details">
+          <div className="report-chart-section">
+            <h3>Trạng thái đơn hàng</h3>
+            <div className="chart-container">
+              <div className="pie-chart-container">
+                <div className="pie-chart-legend">
+                  {charts.map((item, index) => (
+                    <div className="legend-item" key={index}>
+                      <div className="color-box" style={{ backgroundColor: item.color }}></div>
+                      <div className="legend-label">{item.label}: {item.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="pie-chart">
+                  {/* Simple representation of pie chart */}
+                  <div className="simple-pie-chart">
+                    {charts.map((item, index) => {
+                      const total = charts.reduce((sum, chart) => sum + chart.value, 0);
+                      const percentage = total > 0 ? (item.value / total) * 100 : 0;
+                      
+                      return (
+                        <div 
+                          key={index}
+                          className="simple-pie-segment"
+                          style={{
+                            width: `${percentage}%`,
+                            backgroundColor: item.color
+                          }}
+                        ></div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="report-table-section">
+            <h3>Đơn hàng theo ngày</h3>
+            {timeSeriesData && timeSeriesData.length > 0 ? (
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>Ngày</th>
+                    <th>Số đơn</th>
+                    <th>Hoàn thành</th>
+                    <th>Hủy</th>
+                    <th>Doanh thu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {timeSeriesData.map((data, index) => (
+                    <tr key={index}>
+                      <td>{data.date}</td>
+                      <td>{data.count}</td>
+                      <td>{data.completed}</td>
+                      <td>{data.cancelled}</td>
+                      <td>{data.value.toLocaleString('vi-VN')} đ</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="no-data">Không có dữ liệu</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderRevenueReport = () => {
+    if (!reportData) return null;
+    
+    const { summary, charts, timeSeriesData } = reportData;
+    
+    return (
+      <div className="report-content">
+        <div className="report-summary-cards">
+          <div className="summary-card">
+            <div className="summary-icon success">
+              <FontAwesomeIcon icon={faMoneyBillWave} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.totalRevenue.toLocaleString('vi-VN')} đ</div>
+              <div className="summary-label">Tổng doanh thu</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon">
+              <FontAwesomeIcon icon={faShoppingCart} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.ordersCount}</div>
+              <div className="summary-label">Tổng đơn hàng</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon warning">
+              <FontAwesomeIcon icon={faMoneyBillWave} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.completedRevenue.toLocaleString('vi-VN')} đ</div>
+              <div className="summary-label">Doanh thu đơn hoàn thành</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon info">
+              <FontAwesomeIcon icon={faPercentage} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">
+                {summary.growthRate}% <FontAwesomeIcon icon={faArrowUp} size="sm" />
+              </div>
+              <div className="summary-label">Tăng trưởng</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="report-details">
+          <div className="report-chart-section">
+            <h3>Doanh thu theo danh mục</h3>
+            <div className="chart-container">
+              <div className="bar-chart">
+                {charts.map((item, index) => (
+                  <div className="chart-item" key={index}>
+                    <div className="chart-label">{item.label}</div>
+                    <div className="chart-bar-container">
+                      <div 
+                        className="chart-bar" 
+                        style={{ 
+                          width: `${(item.value / Math.max(...charts.map(c => c.value)) * 100) || 0}%`,
+                          backgroundColor: item.color 
+                        }}
+                      ></div>
+                    </div>
+                    <div className="chart-value">{item.value.toLocaleString('vi-VN')} đ</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <div className="report-table-section">
+            <h3>Doanh thu theo ngày</h3>
+            {timeSeriesData && timeSeriesData.length > 0 ? (
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>Ngày</th>
+                    <th>Doanh thu</th>
+                    <th>Số đơn</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {timeSeriesData.map((data, index) => (
+                    <tr key={index}>
+                      <td>{data.date}</td>
+                      <td>{data.revenue.toLocaleString('vi-VN')} đ</td>
+                      <td>{data.orders}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="no-data">Không có dữ liệu</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderServicesReport = () => {
+    if (!reportData) return null;
+    
+    const { summary, charts, serviceTypeData } = reportData;
+    
+    return (
+      <div className="report-content">
+        <div className="report-summary-cards">
+          <div className="summary-card">
+            <div className="summary-icon">
+              <FontAwesomeIcon icon={faToolbox} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.totalServices}</div>
+              <div className="summary-label">Tổng đơn dịch vụ</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon success">
+              <FontAwesomeIcon icon={faCheckCircle} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.completedServices}</div>
+              <div className="summary-label">Hoàn thành</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon warning">
+              <FontAwesomeIcon icon={faSync} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.pendingServices}</div>
+              <div className="summary-label">Đang xử lý</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon danger">
+              <FontAwesomeIcon icon={faTimesCircle} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.cancelledServices}</div>
+              <div className="summary-label">Đã hủy</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="report-summary-cards">
+          <div className="summary-card wide">
+            <div className="summary-icon success">
+              <FontAwesomeIcon icon={faMoneyBillWave} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.totalRevenue.toLocaleString('vi-VN')} đ</div>
+              <div className="summary-label">Doanh thu dịch vụ</div>
+            </div>
+          </div>
+          
+          <div className="summary-card wide">
+            <div className="summary-icon info">
+              <FontAwesomeIcon icon={faPercentage} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{summary.satisfactionRate}%</div>
+              <div className="summary-label">Đánh giá hài lòng</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="report-details">
+          <div className="report-chart-section">
+            <h3>Trạng thái đơn dịch vụ</h3>
+            <div className="chart-container">
+              <div className="pie-chart-container">
+                <div className="pie-chart-legend">
+                  {charts.map((item, index) => (
+                    <div className="legend-item" key={index}>
+                      <div className="color-box" style={{ backgroundColor: item.color }}></div>
+                      <div className="legend-label">{item.label}: {item.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="pie-chart">
+                  {/* Simple representation of pie chart */}
+                  <div className="simple-pie-chart">
+                    {charts.map((item, index) => {
+                      const total = charts.reduce((sum, chart) => sum + chart.value, 0);
+                      const percentage = total > 0 ? (item.value / total) * 100 : 0;
+                      
+                      return (
+                        <div 
+                          key={index}
+                          className="simple-pie-segment"
+                          style={{
+                            width: `${percentage}%`,
+                            backgroundColor: item.color
+                          }}
+                        ></div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="report-table-section">
+            <h3>Dịch vụ theo loại</h3>
+            {serviceTypeData && serviceTypeData.length > 0 ? (
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>Loại dịch vụ</th>
+                    <th>Số lượng</th>
+                    <th>Doanh thu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {serviceTypeData.map((data, index) => (
+                    <tr key={index}>
+                      <td>{data.type}</td>
+                      <td>{data.count}</td>
+                      <td>{data.revenue.toLocaleString('vi-VN')} đ</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="no-data">Không có dữ liệu</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderReport = () => {
+    switch (reportType) {
+      case 'sales':
+        return renderSalesReport();
+      case 'inventory':
+        return renderInventoryReport();
+      case 'orders':
+        return renderOrdersReport();
+      case 'revenue':
+        return renderRevenueReport();
+      case 'services':
+        return renderServicesReport();
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="admin-page">
+      <AdminNavBar />
+      <div className="admin-content">
+        <div className="page-header">
+          <h1>Báo cáo quản trị</h1>
+          
+          {error && (
+            <div className="error-message">
+              <FontAwesomeIcon icon={faTimesCircle} /> {error}
+            </div>
+          )}
+        </div>
+        
+        <div className="report-controls">
+          <div className="report-tabs">
+            {reportTypes.map(type => (
+              <button
+                key={type.value}
+                className={`report-tab ${reportType === type.value ? 'active' : ''}`}
+                onClick={() => setReportType(type.value)}
+              >
+                <FontAwesomeIcon icon={type.icon} /> {type.label}
+              </button>
+            ))}
+          </div>
+          
+          <div className="report-actions">
+            <div className="date-range-selector">
+              <label><FontAwesomeIcon icon={faCalendarAlt} /> Khoảng thời gian:</label>
+              <select
+                value={useCustomDateRange ? 'custom' : dateRange}
+                onChange={(e) => {
+                  if (e.target.value === 'custom') {
+                    setUseCustomDateRange(true);
+                  } else {
+                    setUseCustomDateRange(false);
+                    setDateRange(e.target.value);
+                  }
+                }}
+              >
+                {dateRanges.map(range => (
+                  <option key={range.value} value={range.value}>{range.label}</option>
+                ))}
+              </select>
+            </div>
+            
+            {useCustomDateRange && (
+              <div className="custom-date-range">
+                <input
+                  type="date"
+                  value={customDateRange.startDate}
+                  onChange={(e) => setCustomDateRange({...customDateRange, startDate: e.target.value})}
+                />
+                <span>đến</span>
+                <input
+                  type="date"
+                  value={customDateRange.endDate}
+                  onChange={(e) => setCustomDateRange({...customDateRange, endDate: e.target.value})}
+                />
+              </div>
+            )}
+            
+            <button 
+              className="refresh-button"
+              onClick={generateReport}
+              title="Tạo báo cáo"
+            >
+              <FontAwesomeIcon icon={faSync} /> Cập nhật
+            </button>
+            
+            <button 
+              className="export-button"
+              onClick={() => window.print()}
+              title="In báo cáo"
+            >
+              <FontAwesomeIcon icon={faPrint} /> In báo cáo
+            </button>
+            
+            <button 
+              className="export-button"
+              onClick={() => alert('Chức năng xuất báo cáo đang được phát triển')}
+              title="Xuất báo cáo"
+            >
+              <FontAwesomeIcon icon={faFileExport} /> Xuất Excel
+            </button>
+          </div>
+        </div>
+        
+        <div className="report-container">
+          {loading ? (
+            <div className="loading-spinner">
+              <div className="spinner"></div>
+              <p>Đang tạo báo cáo...</p>
+            </div>
+          ) : reportData ? (
+            <div className="report-panel">
+              <div className="report-header">
+                <h2>{reportData.title}</h2>
+                <div className="report-date-range">{reportData.dateRange || getDateRangeLabel()}</div>
+              </div>
+              
+              {renderReport()}
+            </div>
+          ) : (
+            <div className="no-report">
+              <p>Vui lòng chọn loại báo cáo và khoảng thời gian để xem báo cáo</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AdminReports;

@@ -1,6 +1,33 @@
 const express = require('express');
 const router = express.Router();
-const { Laptop } = require('../models/Laptop');
+const Laptop = require('../models/Laptop');
+
+// Test route to debug
+router.get('/test-debug', async (req, res) => {
+  try {
+    console.log('🔍 Debug route called');
+    
+    const laptops = await Laptop.find({});
+    console.log('📊 Total laptops in DB:', laptops.length);
+    
+    if (laptops.length > 0) {
+      console.log('🔍 First laptop:', laptops[0]);
+    }
+    
+    const newLaptops = await Laptop.filterLaptops({ isNewProduct: true });
+    console.log('📊 New laptops:', newLaptops.length);
+    
+    res.json({
+      totalLaptops: laptops.length,
+      newLaptops: newLaptops.length,
+      sampleLaptop: laptops[0] || null,
+      newLaptopsSample: newLaptops.slice(0, 2)
+    });
+  } catch (error) {
+    console.error('❌ Debug error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // GET /api/laptops - Get all laptops with optional filters
 router.get('/', async (req, res) => {
@@ -111,21 +138,6 @@ router.get('/cpu/:cpuId', async (req, res) => {
   }
 });
 
-// GET /api/laptops/:id - Get laptop by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const laptop = await Laptop.getLaptop(req.params.id);
-    if (!laptop) {
-      return res.status(404).json({ message: 'Laptop not found' });
-    }
-    res.json({
-      data: laptop
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
 // POST /api/laptops - Create new laptop
 router.post('/', async (req, res) => {
   try {
@@ -145,6 +157,26 @@ router.put('/:id', async (req, res) => {
     }
     res.json({ message: 'Laptop updated successfully' });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET /api/laptops/:id - Get laptop by ID (must be at the end to avoid conflicts)
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const laptop = await Laptop.getLaptopById(id);
+    
+    if (!laptop) {
+      return res.status(404).json({ message: 'Laptop not found' });
+    }
+    
+    res.json({
+      data: laptop,
+      success: true
+    });
+  } catch (error) {
+    console.error('Error fetching laptop:', error);
     res.status(500).json({ message: error.message });
   }
 });

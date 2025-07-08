@@ -1,41 +1,5 @@
 const mongoose = require('mongoose');
 
-// Reference models for laptop
-const cpuSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  name: { type: String, required: true, trim: true }
-}, { _id: false });
-
-const brandSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  name: { type: String, required: true, trim: true }
-}, { _id: false });
-
-const vgaSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  name: { type: String, required: true, trim: true }
-}, { _id: false });
-
-const ramSizeSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  size: { type: Number, required: true }
-}, { _id: false });
-
-const storageSizeSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  size: { type: Number, required: true }
-}, { _id: false });
-
-const screenSizeSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  size: { type: Number, required: true }
-}, { _id: false });
-
-const specialFeatureSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  name: { type: String, required: true, trim: true }
-}, { _id: false });
-
 const laptopSchema = new mongoose.Schema({
   _id: {
     type: String,
@@ -53,8 +17,8 @@ const laptopSchema = new mongoose.Schema({
   },
   brand: {
     type: String,
-    ref: 'Brand',
-    required: true
+    required: true,
+    trim: true
   },
   price: {
     type: Number,
@@ -63,18 +27,18 @@ const laptopSchema = new mongoose.Schema({
   },
   cpu: {
     type: String,
-    ref: 'Cpu',
-    required: true
+    required: true,
+    trim: true
   },
   vga: {
     type: String,
-    ref: 'Vga',
-    required: true
+    required: true,
+    trim: true
   },
   ramSize: {
     type: String,
-    ref: 'RamSize',
-    required: true
+    required: true,
+    trim: true
   },
   ramDetails: {
     type: String,
@@ -82,8 +46,8 @@ const laptopSchema = new mongoose.Schema({
   },
   storageSize: {
     type: String,
-    ref: 'StorageSize',
-    required: true
+    required: true,
+    trim: true
   },
   storageDetails: {
     type: String,
@@ -91,29 +55,17 @@ const laptopSchema = new mongoose.Schema({
   },
   screenSize: {
     type: String,
-    ref: 'ScreenSize',
-    required: true
+    required: true,
+    trim: true
   },
   screenDetails: {
     type: String,
     trim: true
   },
-  batteryDetails: {
+  description: {
     type: String,
     trim: true
   },
-  connectionPort: {
-    type: String,
-    trim: true
-  },
-  operationSystem: {
-    type: String,
-    trim: true
-  },
-  specialFeature: [{
-    type: String,
-    ref: 'SpecialFeature'
-  }],
   isNewProduct: {
     type: Boolean,
     default: true
@@ -129,28 +81,40 @@ const laptopSchema = new mongoose.Schema({
     max: 100
   },
   images: [{
-    type: String
-  }]
+    type: String,
+    trim: true
+  }],
+  specialFeature: [{
+    type: String,
+    trim: true
+  }],
+  condition: {
+    type: String,
+    enum: ['new', 'used', 'refurbished'],
+    default: 'new'
+  },
+  warranty: {
+    type: String,
+    trim: true
+  },
+  availability: {
+    type: String,
+    enum: ['in-stock', 'out-of-stock', 'pre-order'],
+    default: 'in-stock'
+  }
 }, {
   timestamps: true,
   _id: false
 });
 
-// Static methods as defined in UML
+// Static methods
 laptopSchema.statics.createLaptop = async function(laptopData) {
   const laptop = new this(laptopData);
   return await laptop.save();
 };
 
-laptopSchema.statics.getLaptop = async function(id) {
-  return await this.findById(id)
-    .populate('brand')
-    .populate('cpu')
-    .populate('vga')
-    .populate('ramSize')
-    .populate('storageSize')
-    .populate('screenSize')
-    .populate('specialFeature');
+laptopSchema.statics.getLaptopById = async function(id) {
+  return await this.findById(id);
 };
 
 laptopSchema.statics.updateLaptop = async function(id, updateData) {
@@ -164,123 +128,69 @@ laptopSchema.statics.deleteLaptop = async function(id) {
 };
 
 laptopSchema.statics.getAllLaptops = async function() {
-  return await this.find({})
-    .populate('brand')
-    .populate('cpu')
-    .populate('vga')
-    .populate('ramSize')
-    .populate('storageSize')
-    .populate('screenSize')
-    .populate('specialFeature');
+  return await this.find({});
 };
 
-laptopSchema.statics.getLaptopsByBrand = async function(brandId) {
-  return await this.find({ brand: brandId })
-    .populate('brand')
-    .populate('cpu')
-    .populate('vga')
-    .populate('ramSize')
-    .populate('storageSize')
-    .populate('screenSize')
-    .populate('specialFeature');
+laptopSchema.statics.getLaptopsByBrand = async function(brand) {
+  return await this.find({ brand: brand });
 };
 
-laptopSchema.statics.getLaptopsByCpu = async function(cpuId) {
-  return await this.find({ cpu: cpuId })
-    .populate('brand')
-    .populate('cpu')
-    .populate('vga')
-    .populate('ramSize')
-    .populate('storageSize')
-    .populate('screenSize')
-    .populate('specialFeature');
-};
-
-laptopSchema.statics.getLatestLaptops = async function(limit = 10) {
-  return await this.find({})
-    .sort({ createdAt: -1 })
-    .limit(limit)
-    .populate('brand')
-    .populate('cpu')
-    .populate('vga')
-    .populate('ramSize')
-    .populate('storageSize')
-    .populate('screenSize')
-    .populate('specialFeature');
-};
-
-laptopSchema.statics.getFeaturedLaptops = async function() {
-  return await this.find({ isFeatured: true })
-    .populate('brand')
-    .populate('cpu')
-    .populate('vga')
-    .populate('ramSize')
-    .populate('storageSize')
-    .populate('screenSize')
-    .populate('specialFeature');
-};
-
-laptopSchema.statics.searchLaptops = async function(keyword) {
-  const regex = new RegExp(keyword, 'i');
+laptopSchema.statics.searchLaptops = async function(query) {
   return await this.find({
     $or: [
-      { displayName: regex },
-      { model: regex },
-      { operationSystem: regex }
+      { displayName: { $regex: query, $options: 'i' } },
+      { model: { $regex: query, $options: 'i' } },
+      { brand: { $regex: query, $options: 'i' } },
+      { cpu: { $regex: query, $options: 'i' } },
+      { description: { $regex: query, $options: 'i' } }
     ]
-  })
-  .populate('brand')
-  .populate('cpu')
-  .populate('vga')
-  .populate('ramSize')
-  .populate('storageSize')
-  .populate('screenSize')
-  .populate('specialFeature');
+  });
 };
 
 laptopSchema.statics.filterLaptops = async function(criteria) {
-  const query = {};
+  const filter = {};
   
-  if (criteria.brand) query.brand = criteria.brand;
-  if (criteria.cpu) query.cpu = criteria.cpu;
-  if (criteria.minPrice) query.price = { $gte: criteria.minPrice };
-  if (criteria.maxPrice) {
-    if (query.price) {
-      query.price.$lte = criteria.maxPrice;
-    } else {
-      query.price = { $lte: criteria.maxPrice };
+  if (criteria.brand) {
+    filter.brand = criteria.brand;
+  }
+  
+  if (criteria.cpu) {
+    filter.cpu = criteria.cpu;
+  }
+  
+  if (criteria.minPrice || criteria.maxPrice) {
+    filter.price = {};
+    if (criteria.minPrice) {
+      filter.price.$gte = criteria.minPrice;
+    }
+    if (criteria.maxPrice) {
+      filter.price.$lte = criteria.maxPrice;
     }
   }
-  if (criteria.isNewProduct !== undefined) query.isNewProduct = criteria.isNewProduct;
-  if (criteria.isFeatured !== undefined) query.isFeatured = criteria.isFeatured;
   
-  return await this.find(query)
-    .populate('brand')
-    .populate('cpu')
-    .populate('vga')
-    .populate('ramSize')
-    .populate('storageSize')
-    .populate('screenSize')
-    .populate('specialFeature');
+  if (criteria.isNewProduct !== undefined) {
+    filter.isNewProduct = criteria.isNewProduct;
+  }
+  
+  if (criteria.isFeatured !== undefined) {
+    filter.isFeatured = criteria.isFeatured;
+  }
+  
+  return await this.find(filter);
 };
 
-// Create reference models
-const Cpu = mongoose.model('Cpu', cpuSchema);
-const Brand = mongoose.model('Brand', brandSchema);
-const Vga = mongoose.model('Vga', vgaSchema);
-const RamSize = mongoose.model('RamSize', ramSizeSchema);
-const StorageSize = mongoose.model('StorageSize', storageSizeSchema);
-const ScreenSize = mongoose.model('ScreenSize', screenSizeSchema);
-const SpecialFeature = mongoose.model('SpecialFeature', specialFeatureSchema);
+laptopSchema.statics.getFeaturedLaptops = async function() {
+  return await this.find({ isFeatured: true });
+};
+
+laptopSchema.statics.getNewLaptops = async function() {
+  return await this.find({ isNewProduct: true });
+};
+
+laptopSchema.statics.getUsedLaptops = async function() {
+  return await this.find({ isNewProduct: false });
+};
 
 const Laptop = mongoose.model('Laptop', laptopSchema);
 
 module.exports = Laptop;
-module.exports.Laptop = Laptop;
-module.exports.Cpu = Cpu;
-module.exports.Brand = Brand;
-module.exports.Vga = Vga;
-module.exports.RamSize = RamSize;
-module.exports.StorageSize = StorageSize;
-module.exports.ScreenSize = ScreenSize;
-module.exports.SpecialFeature = SpecialFeature;

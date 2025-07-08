@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import StaffNavBar from '../components/StaffNavBar';
 import apiService from '../services/apiService';
 import '../assets/staffOrdersScoped.css';
 
@@ -239,22 +239,6 @@ const StaffOrders = () => {
           </div>
         </div>
       </div>
-    );
-  };
-
-  const StaffNavBar = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const handleLogout = () => {
-      localStorage.removeItem('isStaffLoggedIn');
-      navigate('/login');
-    };
-    return (
-      <nav className="staff-navbar">
-        <Link to="/staff/orders" className={location.pathname === '/staff/orders' ? 'active' : ''}>Đơn hàng</Link>
-        <Link to="/staff/inventory" className={location.pathname === '/staff/inventory' ? 'active' : ''}>Tồn kho</Link>
-        <button className="logout-btn" onClick={handleLogout}>Đăng xuất</button>
-      </nav>
     );
   };
 

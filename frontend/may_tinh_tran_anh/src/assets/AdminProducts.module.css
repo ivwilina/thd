@@ -1,0 +1,525 @@
+/* CSS Module cho Admin Products - Tránh xung đột CSS */
+.adminProductsContainer {
+  --ap-primary: #e63312;
+  --ap-secondary: #2c3e50;
+  --ap-success: #28a745;
+  --ap-warning: #ffc107;
+  --ap-danger: #dc3545;
+  --ap-info: #17a2b8;
+  --ap-light: #f8f9fa;
+  --ap-dark: #343a40;
+  --ap-border: #e9ecef;
+  --ap-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --ap-border-radius: 8px;
+  --ap-border-radius-sm: 4px;
+  
+  width: 100%;
+  min-height: calc(100vh - 60px);
+  background-color: #f9fafb;
+  padding: 20px;
+  box-sizing: border-box;
+  
+  /* Reset any inherited styles */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.adminProductsContainer * {
+  box-sizing: border-box;
+}
+
+.pageHeader {
+  margin-bottom: 1.5rem;
+}
+
+.pageTitle {
+  color: var(--ap-dark);
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--ap-border);
+}
+
+.successMessage {
+  background-color: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  color: var(--ap-success);
+  padding: 12px 16px;
+  border-radius: var(--ap-border-radius-sm);
+  margin-bottom: 20px;
+}
+
+.errorMessage {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  color: var(--ap-danger);
+  padding: 12px 16px;
+  border-radius: var(--ap-border-radius-sm);
+  margin-bottom: 20px;
+}
+
+.adminTabs {
+  display: flex;
+  background: #fff;
+  border-radius: var(--ap-border-radius);
+  box-shadow: var(--ap-shadow);
+  margin-bottom: 20px;
+  overflow-x: auto;
+  border: 1px solid var(--ap-border);
+}
+
+.adminTab {
+  padding: 12px 20px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--ap-dark);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  font-family: inherit;
+}
+
+.adminTab:hover {
+  background-color: var(--ap-light);
+  color: var(--ap-primary);
+}
+
+.adminTab.active {
+  background-color: var(--ap-primary);
+  color: white;
+  border-bottom-color: var(--ap-secondary);
+}
+
+.adminActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background: #fff;
+  padding: 15px 20px;
+  border-radius: var(--ap-border-radius);
+  box-shadow: var(--ap-shadow);
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.searchFilters {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  min-width: 250px;
+  padding: 8px 12px;
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-border-radius-sm);
+  font-size: 0.9rem;
+  transition: border-color 0.3s ease;
+  font-family: inherit;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--ap-primary);
+  box-shadow: 0 0 0 2px rgba(230, 51, 18, 0.1);
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.filterGroup label {
+  font-size: 0.8rem;
+  color: var(--ap-dark);
+  font-weight: 500;
+  margin: 0;
+}
+
+.filterGroup select {
+  padding: 6px 8px;
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-border-radius-sm);
+  font-size: 0.85rem;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+  font-family: inherit;
+}
+
+.filterGroup select:focus {
+  outline: none;
+  border-color: var(--ap-primary);
+}
+
+.refreshButton,
+.addButton {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--ap-border-radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.refreshButton {
+  background-color: var(--ap-info);
+  color: white;
+}
+
+.refreshButton:hover {
+  background-color: #138496;
+  transform: translateY(-1px);
+}
+
+.addButton {
+  background-color: var(--ap-success);
+  color: white;
+}
+
+.addButton:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+.tableContainer {
+  background: #fff;
+  border-radius: var(--ap-border-radius);
+  box-shadow: var(--ap-shadow);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.tableHeader {
+  padding: 15px 20px;
+  background-color: var(--ap-light);
+  border-bottom: 1px solid var(--ap-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tableHeader h3 {
+  margin: 0;
+  color: var(--ap-dark);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.productCount {
+  background-color: var(--ap-primary);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.adminTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  background-color: white;
+}
+
+.adminTable thead th {
+  background-color: var(--ap-light);
+  color: var(--ap-dark);
+  font-weight: 600;
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 2px solid var(--ap-border);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.adminTable tbody td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--ap-border);
+  vertical-align: middle;
+  color: var(--ap-dark);
+}
+
+.adminTable tbody tr:hover {
+  background-color: rgba(230, 51, 18, 0.05);
+}
+
+.productInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.productThumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: var(--ap-border-radius-sm);
+  border: 1px solid var(--ap-border);
+  flex-shrink: 0;
+}
+
+.placeholderThumbnail {
+  width: 50px;
+  height: 50px;
+  background-color: var(--ap-light);
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.productTitle {
+  font-weight: 600;
+  color: var(--ap-dark);
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.productSubtitle {
+  font-size: 0.8rem;
+  color: #6c757d;
+  line-height: 1.2;
+}
+
+.statusBadge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusBadge.inStock {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: var(--ap-success);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.statusBadge.outOfStock {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--ap-danger);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.statusBadge.normal {
+  background-color: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+  border: 1px solid rgba(108, 117, 125, 0.2);
+}
+
+.featuredBadge {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: var(--ap-warning);
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.newBadge {
+  background-color: rgba(23, 162, 184, 0.1);
+  color: var(--ap-info);
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border: 1px solid rgba(23, 162, 184, 0.2);
+}
+
+.actionButtonsGroup {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.actionButtonsGroup button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--ap-border-radius-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.editBtn {
+  background-color: rgba(23, 162, 184, 0.1);
+  color: var(--ap-info);
+  border: 1px solid rgba(23, 162, 184, 0.2);
+}
+
+.editBtn:hover {
+  background-color: var(--ap-info);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.viewBtn {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: var(--ap-success);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.viewBtn:hover {
+  background-color: var(--ap-success);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.deleteBtn {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--ap-danger);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.deleteBtn:hover {
+  background-color: var(--ap-danger);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.serviceName strong {
+  color: var(--ap-dark);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.serviceDescription {
+  font-size: 0.8rem;
+  color: #6c757d;
+  line-height: 1.3;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  font-size: 1.1rem;
+  color: var(--ap-dark);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.emptyState h3 {
+  margin-bottom: 10px;
+  color: var(--ap-dark);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .adminProductsContainer {
+    padding: 15px;
+  }
+  
+  .adminActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .searchFilters {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .searchInput {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .filterGroup {
+    min-width: auto;
+  }
+  
+  .filterGroup select {
+    width: 100%;
+  }
+  
+  .actionButtons {
+    justify-content: center;
+  }
+  
+  .refreshButton,
+  .addButton {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .adminTable {
+    font-size: 0.8rem;
+  }
+  
+  .adminTable thead th,
+  .adminTable tbody td {
+    padding: 8px 6px;
+  }
+  
+  .productThumbnail,
+  .placeholderThumbnail {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .actionButtonsGroup button {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .adminTabs {
+    flex-direction: column;
+  }
+  
+  .adminTab {
+    text-align: center;
+  }
+  
+  .tableContainer {
+    overflow-x: auto;
+  }
+  
+  .adminTable {
+    min-width: 600px;
+  }
+}

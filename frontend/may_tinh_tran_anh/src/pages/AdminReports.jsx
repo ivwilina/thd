@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import AdminNavBar from '../components/AdminNavBar';
 import apiService from '../services/apiService';
-import '../assets/adminDashboardScoped.css';
+import '../assets/unifiedAdminStaff.css';
+import '../assets/AdminReportsScoped.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faPrint, 
+  faFileExcel,
+  faChartBar
+} from '@fortawesome/free-solid-svg-icons';
 
 const AdminReports = () => {
   const [reportType, setReportType] = useState('sales');
@@ -148,65 +155,62 @@ const AdminReports = () => {
   return (
     <div className="admin-container">
       <AdminNavBar />
-      <div className="admin-content">
-        <div className="admin-header">
-          <h1>📈 Báo cáo thống kê</h1>
-          <p>Tạo và xem các báo cáo chi tiết về hoạt động kinh doanh</p>
-          <div className="report-actions">
-            <button className="btn-secondary" onClick={printReport}>
-              🖨️ In báo cáo
-            </button>
-            <button className="btn-primary" onClick={exportReport}>
-              📄 Xuất Excel
-            </button>
-          </div>
-        </div>
-
-        {/* Report Controls */}
-        <div className="report-controls">
-          <div className="control-group">
-            <label>Loại báo cáo:</label>
-            <div className="report-type-buttons">
+      <div className="admin-reports-page">
+        <h1><FontAwesomeIcon icon={faChartBar} style={{marginRight: '10px'}} />Báo cáo thống kê</h1>
+        
+        {/* Controls */}
+        <div className="reports-header-controls">
+          <div className="reports-control-row">
+            <div className="reports-type-buttons">
               {reportTypes.map(type => (
                 <button
                   key={type.value}
-                  className={`report-type-btn ${reportType === type.value ? 'active' : ''}`}
+                  className={`reports-type-btn ${reportType === type.value ? 'active' : ''}`}
                   onClick={() => setReportType(type.value)}
                 >
-                  <span className="btn-icon">{type.icon}</span>
-                  <span className="btn-label">{type.label}</span>
+                  <span className="reports-btn-icon">{type.icon}</span>
+                  <span className="reports-btn-label">{type.label}</span>
                 </button>
               ))}
             </div>
+            <div className="reports-filter-group">
+              <label>Khoảng thời gian:</label>
+              <select 
+                value={dateRange} 
+                onChange={(e) => setDateRange(e.target.value)}
+                className="reports-date-range-select"
+              >
+                {dateRanges.map(range => (
+                  <option key={range.value} value={range.value}>
+                    {range.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          
-          <div className="control-group">
-            <label>Khoảng thời gian:</label>
-            <select 
-              value={dateRange} 
-              onChange={(e) => setDateRange(e.target.value)}
-              className="date-range-select"
-            >
-              {dateRanges.map(range => (
-                <option key={range.value} value={range.value}>
-                  {range.label}
-                </option>
-              ))}
-            </select>
+          <div className="reports-actions">
+            <button className="reports-btn-secondary" onClick={printReport}>
+              <FontAwesomeIcon icon={faPrint} />
+              In báo cáo
+            </button>
+            <button className="reports-btn-primary" onClick={exportReport}>
+              <FontAwesomeIcon icon={faFileExcel} />
+              Xuất Excel
+            </button>
           </div>
         </div>
 
         {loading ? (
-          <div className="loading">🔄 Đang tạo báo cáo...</div>
+          <div className="reports-loading">🔄 Đang tạo báo cáo...</div>
         ) : reportData ? (
-          <div className="report-content">
-            <h2>{reportData.title} - {dateRanges.find(r => r.value === dateRange)?.label}</h2>
+          <div className="reports-content">
+            <h2 className="reports-content-title">{reportData.title} - {dateRanges.find(r => r.value === dateRange)?.label}</h2>
             
             {/* Summary Cards */}
-            <div className="report-summary">
+            <div className="reports-summary">
               {Object.entries(reportData.summary).map(([key, value]) => (
-                <div key={key} className="summary-card">
-                  <div className="summary-value">
+                <div key={key} className="reports-summary-card">
+                  <div className="reports-summary-value">
                     {typeof value === 'number' && value > 1000000 
                       ? formatCurrency(value)
                       : typeof value === 'number' 
@@ -214,7 +218,7 @@ const AdminReports = () => {
                       : value
                     }
                   </div>
-                  <div className="summary-label">
+                  <div className="reports-summary-label">
                     {key === 'totalSales' && 'Tổng số bán'}
                     {key === 'totalRevenue' && 'Tổng doanh thu'}
                     {key === 'topProduct' && 'Sản phẩm bán chạy'}
@@ -236,15 +240,15 @@ const AdminReports = () => {
             </div>
 
             {/* Chart */}
-            <div className="report-chart">
-              <h3>Biểu đồ thống kê</h3>
-              <div className="chart-container">
+            <div className="reports-chart">
+              <h3 className="reports-chart-title">Biểu đồ thống kê</h3>
+              <div className="reports-chart-container">
                 {reportData.charts.map((item, index) => (
-                  <div key={index} className="chart-bar">
-                    <div className="bar-label">{item.label}</div>
-                    <div className="bar-container">
+                  <div key={index} className="reports-chart-bar">
+                    <div className="reports-bar-label">{item.label}</div>
+                    <div className="reports-bar-container">
                       <div 
-                        className="bar"
+                        className="reports-bar"
                         style={{
                           width: reportType === 'revenue' 
                             ? `${(item.value / Math.max(...reportData.charts.map(c => c.value))) * 100}%`
@@ -253,7 +257,7 @@ const AdminReports = () => {
                         }}
                       ></div>
                     </div>
-                    <div className="bar-value">
+                    <div className="reports-bar-value">
                       {reportType === 'revenue' 
                         ? formatCurrency(item.value)
                         : formatNumber(item.value)
@@ -265,7 +269,7 @@ const AdminReports = () => {
             </div>
 
             {/* Report Footer */}
-            <div className="report-footer">
+            <div className="reports-footer">
               <p>
                 📅 Báo cáo được tạo lúc: {new Date().toLocaleString('vi-VN')}
               </p>
@@ -275,7 +279,7 @@ const AdminReports = () => {
             </div>
           </div>
         ) : (
-          <div className="no-data">
+          <div className="reports-no-data">
             <p>📊 Chọn loại báo cáo và khoảng thời gian để xem dữ liệu</p>
           </div>
         )}

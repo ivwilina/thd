@@ -1,0 +1,793 @@
+import React, { useState, useEffect } from 'react';
+import AdminNavBar from '../components/AdminNavBar';
+import apiService from '../services/apiService';
+import '../assets/unifiedAdminStaff.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faSearch,
+  faFilter,
+  faWarehouse,
+  faBoxOpen,
+  faEdit,
+  faPlus,
+  faMinus,
+  faSync,
+  faExclamationTriangle,
+  faCheckCircle,
+  faTimesCircle,
+  faInfoCircle,
+  faArrowUp,
+  faArrowDown,
+  faBox,
+  faHistory
+} from '@fortawesome/free-solid-svg-icons';
+
+const AdminInventory = () => {
+  const [inventoryData, setInventoryData] = useState([]);
+  const [productData, setProductData] = useState({ laptops: [], printers: [] });
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [showStockModal, setShowStockModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [stockUpdate, setStockUpdate] = useState({ 
+    quantity: 0, 
+    type: 'IN', 
+    reason: '', 
+    reference: '',
+    notes: ''
+  });
+  const [sortConfig, setSortConfig] = useState({
+    key: 'currentStock',
+    direction: 'descending'
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Fetch inventory data and product data
+      const [inventoryRes, laptopsRes, printersRes] = await Promise.all([
+        apiService.get('/inventory').catch(() => ({ inventories: [] })),
+        apiService.getLaptops().catch(() => []),
+        apiService.getPrinters().catch(() => [])
+      ]);
+
+      // Process inventory data
+      let inventoryItems = Array.isArray(inventoryRes) ? inventoryRes : (inventoryRes.inventories || []);
+      
+      // Get laptops and printers properly
+      const laptops = Array.isArray(laptopsRes) ? laptopsRes : (laptopsRes.laptops || []);
+      const printers = Array.isArray(printersRes) ? printersRes : (printersRes.printers || []);
+      
+      setProductData({ laptops, printers });
+      
+      // If no dedicated inventory, create from products
+      if (inventoryItems.length === 0) {
+        inventoryItems = [
+          ...laptops.map(laptop => ({
+            productId: laptop._id,
+            productType: 'laptop',
+            productInfo: {
+              name: laptop.displayName || 'Laptop không tên',
+              brand: laptop.brand
+            },
+            currentStock: laptop.stock || 0,
+            reservedStock: 0,
+            availableStock: laptop.stock || 0,
+            minimumStock: 5,
+            maximumStock: 50,
+            reorderLevel: 10,
+            location: {
+              warehouse: 'Kho A',
+              shelf: 'A-01'
+            },
+            metadata: {
+              updatedAt: laptop.updatedAt || new Date().toISOString()
+            },
+            status: 'ACTIVE',
+            stockMovements: []
+          })),
+          ...printers.map(printer => ({
+            productId: printer._id,
+            productType: 'printer',
+            productInfo: {
+              name: printer.description || 'Máy in không tên',
+              brand: printer.brand
+            },
+            currentStock: printer.stock || 0,
+            reservedStock: 0,
+            availableStock: printer.stock || 0,
+            minimumStock: 3,
+            maximumStock: 20,
+            reorderLevel: 5,
+            location: {
+              warehouse: 'Kho B',
+              shelf: 'B-01'
+            },
+            metadata: {
+              updatedAt: printer.updatedAt || new Date().toISOString()
+            },
+            status: 'ACTIVE',
+            stockMovements: []
+          }))
+        ];
+      }
+
+      setInventoryData(inventoryItems);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Không thể tải dữ liệu kho hàng.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStockStatus = (currentStock, reorderLevel, minimumStock) => {
+    if (currentStock <= 0) return 'out-of-stock';
+    if (currentStock <= minimumStock) return 'low-stock';
+    if (currentStock <= reorderLevel) return 'reorder';
+    return 'in-stock';
+  };
+
+  const getStockStatusText = (status) => {
+    switch (status) {
+      case 'out-of-stock': return 'Hết hàng';
+      case 'low-stock': return 'Sắp hết';
+      case 'reorder': return 'Cần đặt thêm';
+      case 'in-stock': return 'Còn hàng';
+      default: return 'Không xác định';
+    }
+  };
+
+  const getProductName = (item) => {
+    if (item.productInfo && item.productInfo.name) {
+      return item.productInfo.name;
+    }
+    
+    // If no productInfo, try to find the product in our data
+    if (item.productType === 'laptop') {
+      const laptop = productData.laptops.find(l => l._id === item.productId);
+      return laptop ? (laptop.displayName || 'Laptop không tên') : 'Laptop không tìm thấy';
+    } else if (item.productType === 'printer') {
+      const printer = productData.printers.find(p => p._id === item.productId);
+      return printer ? (printer.description || 'Máy in không tên') : 'Máy in không tìm thấy';
+    }
+    
+    return 'Sản phẩm không xác định';
+  };
+
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const handleStockUpdate = async () => {
+    if (!selectedItem) return;
+    
+    // Validate form
+    if (!stockUpdate.quantity || stockUpdate.quantity <= 0) {
+      setError('Số lượng phải lớn hơn 0');
+      return;
+    }
+
+    if (!stockUpdate.reason) {
+      setError('Vui lòng nhập lý do');
+      return;
+    }
+
+    try {
+      // In a real implementation, you would call the API to update stock
+      // For now, we'll just update the local state to simulate it
+      const updatedInventory = inventoryData.map(item => {
+        if (item.productId === selectedItem.productId) {
+          const newItem = { ...item };
+          
+          // Update stock based on the operation type
+          if (stockUpdate.type === 'IN') {
+            newItem.currentStock = (parseInt(newItem.currentStock) || 0) + parseInt(stockUpdate.quantity);
+            newItem.availableStock = (parseInt(newItem.availableStock) || 0) + parseInt(stockUpdate.quantity);
+          } else if (stockUpdate.type === 'OUT') {
+            // Check if there's enough stock
+            if ((parseInt(newItem.availableStock) || 0) < parseInt(stockUpdate.quantity)) {
+              throw new Error('Không đủ số lượng trong kho');
+            }
+            newItem.currentStock = (parseInt(newItem.currentStock) || 0) - parseInt(stockUpdate.quantity);
+            newItem.availableStock = (parseInt(newItem.availableStock) || 0) - parseInt(stockUpdate.quantity);
+          } else if (stockUpdate.type === 'ADJUSTMENT') {
+            // Direct adjustment to a specific value
+            newItem.currentStock = parseInt(stockUpdate.quantity);
+            newItem.availableStock = parseInt(stockUpdate.quantity) - (parseInt(newItem.reservedStock) || 0);
+          }
+          
+          // Add movement record
+          if (!newItem.stockMovements) {
+            newItem.stockMovements = [];
+          }
+          
+          newItem.stockMovements.push({
+            type: stockUpdate.type,
+            quantity: parseInt(stockUpdate.quantity),
+            reason: stockUpdate.reason,
+            reference: stockUpdate.reference,
+            date: new Date().toISOString(),
+            notes: stockUpdate.notes
+          });
+          
+          // Update metadata
+          if (!newItem.metadata) {
+            newItem.metadata = {};
+          }
+          newItem.metadata.updatedAt = new Date().toISOString();
+          
+          return newItem;
+        }
+        return item;
+      });
+
+      setInventoryData(updatedInventory);
+      setSuccess(`Đã cập nhật kho hàng thành công: ${stockUpdate.type === 'IN' ? 'Nhập' : stockUpdate.type === 'OUT' ? 'Xuất' : 'Điều chỉnh'} ${stockUpdate.quantity} sản phẩm`);
+      setTimeout(() => setSuccess(null), 3000);
+      
+      // Reset form and close modal
+      setStockUpdate({ 
+        quantity: 0, 
+        type: 'IN', 
+        reason: '', 
+        reference: '',
+        notes: ''
+      });
+      setShowStockModal(false);
+      setSelectedItem(null);
+    } catch (err) {
+      console.error('Error updating stock:', err);
+      setError('Không thể cập nhật kho hàng: ' + err.message);
+    }
+  };
+
+  const handleOpenStockModal = (item, type = 'IN') => {
+    setSelectedItem(item);
+    setStockUpdate({
+      quantity: 0,
+      type,
+      reason: type === 'IN' ? 'Nhập kho mới' : type === 'OUT' ? 'Xuất kho' : 'Điều chỉnh tồn kho',
+      reference: '',
+      notes: ''
+    });
+    setShowStockModal(true);
+  };
+
+  const handleOpenHistoryModal = (item) => {
+    setSelectedItem(item);
+    setShowHistoryModal(true);
+  };
+
+  // Filter and sort inventory data
+  const getFilteredInventory = () => {
+    let filteredData = [...inventoryData];
+    
+    // Apply product type filter
+    if (filter !== 'all') {
+      filteredData = filteredData.filter(item => item.productType === filter);
+    }
+    
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filteredData = filteredData.filter(item => {
+        const nameMatch = getProductName(item).toLowerCase().includes(searchLower);
+        const idMatch = item.productId?.toLowerCase().includes(searchLower);
+        const locationMatch = `${item.location?.warehouse || ''} ${item.location?.shelf || ''}`.toLowerCase().includes(searchLower);
+        
+        return nameMatch || idMatch || locationMatch;
+      });
+    }
+    
+    // Apply sorting
+    if (sortConfig.key) {
+      filteredData.sort((a, b) => {
+        // Handle nested properties
+        let aValue, bValue;
+        
+        if (sortConfig.key === 'name') {
+          aValue = getProductName(a);
+          bValue = getProductName(b);
+        } else if (sortConfig.key.includes('.')) {
+          const keys = sortConfig.key.split('.');
+          aValue = keys.reduce((obj, key) => obj?.[key], a);
+          bValue = keys.reduce((obj, key) => obj?.[key], b);
+        } else {
+          aValue = a[sortConfig.key];
+          bValue = b[sortConfig.key];
+        }
+        
+        // Convert to numbers if they're numeric strings
+        if (!isNaN(aValue)) aValue = Number(aValue);
+        if (!isNaN(bValue)) bValue = Number(bValue);
+        
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    
+    return filteredData;
+  };
+
+  const filteredInventory = getFilteredInventory();
+
+  const renderSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return null;
+    }
+    return (
+      <FontAwesomeIcon 
+        icon={sortConfig.direction === 'ascending' ? faArrowUp : faArrowDown} 
+        size="sm" 
+      />
+    );
+  };
+
+  const renderInventoryTable = () => (
+    <table className="admin-table">
+      <thead>
+        <tr>
+          <th style={{ width: '5%' }}>#</th>
+          <th 
+            style={{ width: '10%', cursor: 'pointer' }} 
+            onClick={() => handleSort('productId')}
+          >
+            Mã SP {renderSortIcon('productId')}
+          </th>
+          <th 
+            style={{ width: '25%', cursor: 'pointer' }} 
+            onClick={() => handleSort('name')}
+          >
+            Tên sản phẩm {renderSortIcon('name')}
+          </th>
+          <th 
+            style={{ width: '10%', cursor: 'pointer' }} 
+            onClick={() => handleSort('productType')}
+          >
+            Loại {renderSortIcon('productType')}
+          </th>
+          <th 
+            style={{ width: '10%', cursor: 'pointer' }} 
+            onClick={() => handleSort('currentStock')}
+          >
+            Tồn kho {renderSortIcon('currentStock')}
+          </th>
+          <th 
+            style={{ width: '10%', cursor: 'pointer' }} 
+            onClick={() => handleSort('availableStock')}
+          >
+            Khả dụng {renderSortIcon('availableStock')}
+          </th>
+          <th style={{ width: '10%' }}>Trạng thái</th>
+          <th style={{ width: '10%' }}>Vị trí</th>
+          <th style={{ width: '10%' }}>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {filteredInventory.map((item, index) => {
+          const status = getStockStatus(
+            item.availableStock || item.currentStock || 0,
+            item.reorderLevel || 10,
+            item.minimumStock || 5
+          );
+          
+          return (
+            <tr key={item.productId || index}>
+              <td>{index + 1}</td>
+              <td>{item.productId?.substring(0, 8) || 'N/A'}</td>
+              <td className="product-name">
+                <div className="product-info">
+                  <div className="placeholder-thumbnail">
+                    <FontAwesomeIcon icon={item.productType === 'laptop' ? faLaptop : faBoxOpen} />
+                  </div>
+                  <div>
+                    <div className="product-title">{getProductName(item)}</div>
+                    <div className="product-subtitle">
+                      {item.productInfo?.brand || 'Không có thương hiệu'}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span className="category-badge">
+                  {item.productType === 'laptop' ? 'Laptop' : 
+                   item.productType === 'printer' ? 'Máy in' : item.productType}
+                </span>
+              </td>
+              <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                {item.currentStock || 0}
+              </td>
+              <td style={{ textAlign: 'center' }}>
+                {item.availableStock || item.currentStock || 0}
+              </td>
+              <td>
+                <span className={`status-badge ${status}`}>
+                  {getStockStatusText(status)}
+                </span>
+              </td>
+              <td>
+                {item.location ? (
+                  <span className="location-text">
+                    {item.location.warehouse || 'Kho chính'}-{item.location.shelf || 'A01'}
+                  </span>
+                ) : 'Không có thông tin'}
+              </td>
+              <td>
+                <div className="action-buttons">
+                  <button 
+                    className="stock-in-btn" 
+                    onClick={() => handleOpenStockModal(item, 'IN')}
+                    title="Nhập kho"
+                  >
+                    <FontAwesomeIcon icon={faPlus} />
+                  </button>
+                  <button 
+                    className="stock-out-btn" 
+                    onClick={() => handleOpenStockModal(item, 'OUT')}
+                    title="Xuất kho"
+                  >
+                    <FontAwesomeIcon icon={faMinus} />
+                  </button>
+                  <button 
+                    className="history-btn" 
+                    onClick={() => handleOpenHistoryModal(item)}
+                    title="Lịch sử"
+                  >
+                    <FontAwesomeIcon icon={faHistory} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+
+  const renderStockModal = () => {
+    if (!selectedItem) return null;
+    
+    const actionText = stockUpdate.type === 'IN' ? 'Nhập kho' : 
+                      stockUpdate.type === 'OUT' ? 'Xuất kho' : 'Điều chỉnh';
+    
+    return (
+      <div className={`modal-overlay ${showStockModal ? 'active' : ''}`}>
+        <div className="modal-container">
+          <div className="modal-header">
+            <h2>{actionText} - {getProductName(selectedItem)}</h2>
+            <button 
+              className="close-button"
+              onClick={() => setShowStockModal(false)}
+            >
+              &times;
+            </button>
+          </div>
+          <div className="modal-body">
+            <div className="form-group">
+              <label>Loại thao tác:</label>
+              <select 
+                value={stockUpdate.type}
+                onChange={(e) => setStockUpdate({...stockUpdate, type: e.target.value})}
+              >
+                <option value="IN">Nhập kho</option>
+                <option value="OUT">Xuất kho</option>
+                <option value="ADJUSTMENT">Điều chỉnh số lượng</option>
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label>
+                {stockUpdate.type === 'ADJUSTMENT' ? 'Số lượng mới:' : 'Số lượng:'}
+              </label>
+              <input 
+                type="number" 
+                min="0"
+                value={stockUpdate.quantity}
+                onChange={(e) => setStockUpdate({...stockUpdate, quantity: parseInt(e.target.value) || 0})}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Lý do:</label>
+              <input 
+                type="text"
+                value={stockUpdate.reason}
+                onChange={(e) => setStockUpdate({...stockUpdate, reason: e.target.value})}
+                placeholder="Nhập lý do thay đổi kho hàng"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Tham chiếu (Mã đơn hàng, phiếu nhập...):</label>
+              <input 
+                type="text"
+                value={stockUpdate.reference}
+                onChange={(e) => setStockUpdate({...stockUpdate, reference: e.target.value})}
+                placeholder="Ví dụ: ĐH12345, PNK001..."
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Ghi chú:</label>
+              <textarea 
+                value={stockUpdate.notes}
+                onChange={(e) => setStockUpdate({...stockUpdate, notes: e.target.value})}
+                placeholder="Thông tin bổ sung (nếu có)"
+                rows="3"
+              ></textarea>
+            </div>
+            
+            <div className="inventory-summary">
+              <div className="summary-item">
+                <span>Tồn kho hiện tại:</span>
+                <strong>{selectedItem.currentStock || 0}</strong>
+              </div>
+              <div className="summary-item">
+                <span>Đã đặt trước:</span>
+                <strong>{selectedItem.reservedStock || 0}</strong>
+              </div>
+              <div className="summary-item">
+                <span>Khả dụng:</span>
+                <strong>{selectedItem.availableStock || selectedItem.currentStock || 0}</strong>
+              </div>
+              {stockUpdate.type !== 'ADJUSTMENT' && (
+                <div className="summary-item result">
+                  <span>Kết quả sau thao tác:</span>
+                  <strong>
+                    {stockUpdate.type === 'IN' 
+                      ? (parseInt(selectedItem.currentStock) || 0) + parseInt(stockUpdate.quantity)
+                      : (parseInt(selectedItem.currentStock) || 0) - parseInt(stockUpdate.quantity)}
+                  </strong>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button 
+              className="cancel-button"
+              onClick={() => setShowStockModal(false)}
+            >
+              Hủy
+            </button>
+            <button 
+              className="save-button"
+              onClick={handleStockUpdate}
+            >
+              {stockUpdate.type === 'IN' ? 'Nhập kho' : 
+               stockUpdate.type === 'OUT' ? 'Xuất kho' : 'Cập nhật'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderHistoryModal = () => {
+    if (!selectedItem) return null;
+    
+    const movements = selectedItem.stockMovements || [];
+    
+    return (
+      <div className={`modal-overlay ${showHistoryModal ? 'active' : ''}`}>
+        <div className="modal-container large-modal">
+          <div className="modal-header">
+            <h2>Lịch sử xuất nhập kho - {getProductName(selectedItem)}</h2>
+            <button 
+              className="close-button"
+              onClick={() => setShowHistoryModal(false)}
+            >
+              &times;
+            </button>
+          </div>
+          <div className="modal-body">
+            {movements.length === 0 ? (
+              <p className="no-data">Chưa có lịch sử xuất nhập kho cho sản phẩm này</p>
+            ) : (
+              <table className="history-table">
+                <thead>
+                  <tr>
+                    <th>Thời gian</th>
+                    <th>Loại</th>
+                    <th>Số lượng</th>
+                    <th>Lý do</th>
+                    <th>Tham chiếu</th>
+                    <th>Ghi chú</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {movements.map((movement, index) => (
+                    <tr key={index}>
+                      <td>{new Date(movement.date).toLocaleString('vi-VN')}</td>
+                      <td>
+                        <span className={`movement-type ${movement.type.toLowerCase()}`}>
+                          {movement.type === 'IN' ? 'Nhập kho' : 
+                           movement.type === 'OUT' ? 'Xuất kho' : 
+                           movement.type === 'ADJUSTMENT' ? 'Điều chỉnh' : 
+                           movement.type === 'RESERVED' ? 'Đặt trước' : 
+                           movement.type === 'RELEASED' ? 'Hủy đặt' : movement.type}
+                        </span>
+                      </td>
+                      <td className={movement.type === 'OUT' || movement.quantity < 0 ? 'negative' : 'positive'}>
+                        {movement.type === 'OUT' || movement.quantity < 0 ? '-' : '+'}{Math.abs(movement.quantity)}
+                      </td>
+                      <td>{movement.reason || 'Không có'}</td>
+                      <td>{movement.reference || 'N/A'}</td>
+                      <td>{movement.notes || ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+          <div className="modal-footer">
+            <button 
+              className="close-button"
+              onClick={() => setShowHistoryModal(false)}
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="admin-page">
+      <AdminNavBar />
+      <div className="admin-content">
+        <div className="page-header">
+          <h1>Quản lý kho hàng</h1>
+          
+          {success && (
+            <div className="success-message">
+              <FontAwesomeIcon icon={faCheckCircle} /> {success}
+            </div>
+          )}
+          
+          {error && (
+            <div className="error-message">
+              <FontAwesomeIcon icon={faTimesCircle} /> {error}
+            </div>
+          )}
+        </div>
+        
+        <div className="admin-controls">
+          <div className="search-filter-row">
+            <div className="search-box">
+              <FontAwesomeIcon icon={faSearch} />
+              <input 
+                type="text" 
+                placeholder="Tìm kiếm sản phẩm..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="filter-controls">
+              <div className="filter-group">
+                <label><FontAwesomeIcon icon={faFilter} /> Loại sản phẩm:</label>
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                >
+                  <option value="all">Tất cả</option>
+                  <option value="laptop">Laptop</option>
+                  <option value="printer">Máy in</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div className="admin-actions">
+            <button 
+              className="refresh-button"
+              onClick={fetchData}
+              title="Làm mới danh sách"
+            >
+              <FontAwesomeIcon icon={faSync} /> Làm mới
+            </button>
+          </div>
+        </div>
+        
+        <div className="inventory-summary-cards">
+          <div className="summary-card">
+            <div className="summary-icon">
+              <FontAwesomeIcon icon={faBoxOpen} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">{inventoryData.reduce((sum, item) => sum + (parseInt(item.currentStock) || 0), 0)}</div>
+              <div className="summary-label">Tổng sản phẩm trong kho</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon warning">
+              <FontAwesomeIcon icon={faExclamationTriangle} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">
+                {inventoryData.filter(item => 
+                  (item.availableStock || item.currentStock || 0) > 0 && 
+                  (item.availableStock || item.currentStock || 0) <= (item.minimumStock || 5)
+                ).length}
+              </div>
+              <div className="summary-label">Sản phẩm sắp hết hàng</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon danger">
+              <FontAwesomeIcon icon={faTimesCircle} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">
+                {inventoryData.filter(item => 
+                  (item.availableStock || item.currentStock || 0) === 0
+                ).length}
+              </div>
+              <div className="summary-label">Sản phẩm hết hàng</div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-icon">
+              <FontAwesomeIcon icon={faWarehouse} />
+            </div>
+            <div className="summary-content">
+              <div className="summary-value">
+                {new Set(inventoryData.map(item => item.location?.warehouse)).size}
+              </div>
+              <div className="summary-label">Kho hàng hoạt động</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="admin-table-container">
+          {loading ? (
+            <div className="loading-spinner">
+              <div className="spinner"></div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
+          ) : filteredInventory.length === 0 ? (
+            <div className="no-products">
+              <p>Không tìm thấy sản phẩm nào trong kho {searchTerm ? 'phù hợp với tìm kiếm' : ''}</p>
+            </div>
+          ) : (
+            <>
+              {renderInventoryTable()}
+              
+              <div className="table-summary">
+                <p>Hiển thị {filteredInventory.length} / {inventoryData.length} sản phẩm</p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+      
+      {renderStockModal()}
+      {renderHistoryModal()}
+    </div>
+  );
+};
+
+export default AdminInventory;

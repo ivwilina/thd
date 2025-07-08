@@ -32,310 +32,316 @@ const connectDB = async () => {
 // Sample data
 const sampleEmployees = [
   {
-    employeeId: 'ADMIN001',
-    fullName: 'Nguyễn Văn Admin',
+    _id: 'ADMIN001',
+    name: 'Nguyễn Văn Admin',
+    username: 'admin',
     email: 'admin@maytinhrananh.com',
     password: 'admin123',
     role: 'admin',
-    status: 'active',
-    phone: '0123456789',
+    isActive: true,
+    phoneNumber: '0123456789',
     address: '123 Đường ABC, TP.HCM'
   },
   {
-    employeeId: 'STAFF001',
-    fullName: 'Trần Thị Staff',
+    _id: 'STAFF001',
+    name: 'Trần Thị Staff',
+    username: 'staff1',
     email: 'staff1@maytinhrananh.com', 
     password: 'staff123',
     role: 'staff',
-    status: 'active',
-    phone: '0987654321',
+    isActive: true,
+    phoneNumber: '0987654321',
     address: '456 Đường XYZ, TP.HCM'
   },
   {
-    employeeId: 'STAFF002',
-    fullName: 'Lê Văn Hỗ Trợ',
+    _id: 'STAFF002',
+    name: 'Lê Văn Hỗ Trợ',
+    username: 'staff2',
     email: 'staff2@maytinhrananh.com',
     password: 'staff123',
     role: 'staff', 
-    status: 'active',
-    phone: '0369258147',
+    isActive: true,
+    phoneNumber: '0369258147',
     address: '789 Đường DEF, TP.HCM'
   },
   {
-    employeeId: 'MGR001',
-    fullName: 'Phạm Thị Manager',
+    _id: 'MGR001',
+    name: 'Phạm Thị Manager',
+    username: 'manager',
     email: 'manager@maytinhrananh.com',
     password: 'manager123',
     role: 'manager',
-    status: 'active',
-    phone: '0147258369',
+    isActive: true,
+    phoneNumber: '0147258369',
     address: '321 Đường GHI, TP.HCM'
   }
 ];
 
 const sampleLaptops = [
   {
-    brand: 'Dell',
+    _id: 'LAPTOP001',
+    brand: 'DELL',
     model: 'Inspiron 3511',
     displayName: 'Dell Inspiron 3511 - Intel Core i5',
-    cpu: 'Intel Core i5-1135G7',
-    ram: '8GB DDR4',
-    storage: '256GB SSD',
-    screen: '15.6 inch Full HD',
-    graphics: 'Intel Iris Xe Graphics',
+    cpu: 'INTEL_I5_1135G7',
+    ramSize: 'RAM_8GB',
+    ramDetails: '8GB DDR4',
+    storageSize: 'STORAGE_256GB',
+    storageDetails: '256GB SSD',
+    screenSize: 'SCREEN_15_6',
+    screenDetails: '15.6 inch Full HD',
+    vga: 'INTEL_IRIS_XE',
     price: 15990000,
     description: 'Laptop Dell Inspiron 3511 với cấu hình mạnh mẽ, phù hợp cho công việc văn phòng và học tập.',
-    category: 'laptop',
-    status: 'available',
     isNewProduct: true,
-    isFeatured: true,
-    discount: 5,
+    specialFeature: [],
     images: ['laptop_dell_1_1.jpg', 'laptop_dell_1_2.jpg', 'laptop_dell_1_3.jpg']
   },
   {
+    _id: 'LAPTOP002',
     brand: 'HP',
     model: 'Pavilion 15-eg0xxx',
     displayName: 'HP Pavilion 15 - Intel Core i7',
-    cpu: 'Intel Core i7-1165G7',
-    ram: '16GB DDR4',
-    storage: '512GB SSD',
-    screen: '15.6 inch Full HD IPS',
-    graphics: 'Intel Iris Xe Graphics',
+    cpu: 'INTEL_I7_1165G7',
+    ramSize: 'RAM_16GB',
+    ramDetails: '16GB DDR4',
+    storageSize: 'STORAGE_512GB',
+    storageDetails: '512GB SSD',
+    screenSize: 'SCREEN_15_6',
+    screenDetails: '15.6 inch Full HD IPS',
+    vga: 'INTEL_IRIS_XE',
     price: 19990000,
     description: 'Laptop HP Pavilion 15 với hiệu năng cao, thiết kế đẹp mắt.',
-    category: 'laptop',
-    status: 'available',
     isNewProduct: true,
-    isFeatured: true,
-    discount: 8,
+    specialFeature: [],
     images: ['laptop_hp_1_1.jpg', 'laptop_hp_1_2.jpg', 'laptop_hp_1_3.jpg']
   },
   {
-    brand: 'Asus',
+    _id: 'LAPTOP003',
+    brand: 'ASUS',
     model: 'VivoBook 15 X515',
     displayName: 'Asus VivoBook 15 - AMD Ryzen 5',
-    cpu: 'AMD Ryzen 5 5500U',
-    ram: '8GB DDR4',
-    storage: '256GB SSD',
-    screen: '15.6 inch Full HD',
-    graphics: 'AMD Radeon Graphics',
+    cpu: 'AMD_RYZEN5_5500U',
+    ramSize: 'RAM_8GB',
+    ramDetails: '8GB DDR4',
+    storageSize: 'STORAGE_256GB',
+    storageDetails: '256GB SSD',
+    screenSize: 'SCREEN_15_6',
+    screenDetails: '15.6 inch Full HD',
+    vga: 'AMD_RADEON',
     price: 13990000,
     description: 'Laptop Asus VivoBook 15 với vi xử lý AMD Ryzen mạnh mẽ.',
-    category: 'laptop',
-    status: 'available',
     isNewProduct: true,
-    isFeatured: false,
-    discount: 0,
+    specialFeature: [],
     images: ['laptop_asus_1_1.jpg', 'laptop_asus_1_2.jpg', 'laptop_asus_1_3.jpg']
   },
   {
-    brand: 'Lenovo',
+    _id: 'LAPTOP004',
+    brand: 'LENOVO',
     model: 'IdeaPad 3 15ITL6',
     displayName: 'Lenovo IdeaPad 3 - Intel Core i5',
-    cpu: 'Intel Core i5-1135G7',
-    ram: '8GB DDR4',
-    storage: '512GB SSD',
-    screen: '15.6 inch Full HD',
-    graphics: 'Intel Iris Xe Graphics',
+    cpu: 'INTEL_I5_1135G7',
+    ramSize: 'RAM_8GB',
+    ramDetails: '8GB DDR4',
+    storageSize: 'STORAGE_512GB',
+    storageDetails: '512GB SSD',
+    screenSize: 'SCREEN_15_6',
+    screenDetails: '15.6 inch Full HD',
+    vga: 'INTEL_IRIS_XE',
     price: 16490000,
     description: 'Laptop Lenovo IdeaPad 3 với thiết kế hiện đại, cấu hình ổn định.',
-    category: 'laptop',
-    status: 'available',
     isNewProduct: true,
-    isFeatured: true,
-    discount: 3,
+    specialFeature: [],
     images: ['laptop_lenovo_1_1.jpg', 'laptop_lenovo_1_2.jpg', 'laptop_lenovo_1_3.jpg']
   },
   {
-    brand: 'Apple',
+    _id: 'LAPTOP005',
+    brand: 'APPLE',
     model: 'MacBook Air M1',
     displayName: 'MacBook Air M1 - 256GB',
-    cpu: 'Apple M1',
-    ram: '8GB Unified Memory',
-    storage: '256GB SSD',
-    screen: '13.3 inch Retina Display',
-    graphics: 'Apple M1 GPU',
+    cpu: 'APPLE_M1',
+    ramSize: 'RAM_8GB',
+    ramDetails: '8GB Unified Memory',
+    storageSize: 'STORAGE_256GB',
+    storageDetails: '256GB SSD',
+    screenSize: 'SCREEN_13_3',
+    screenDetails: '13.3 inch Retina Display',
+    vga: 'APPLE_M1_GPU',
     price: 26990000,
     description: 'MacBook Air với chip M1 siêu tiết kiệm pin, hiệu năng vượt trội.',
-    category: 'laptop',
-    status: 'available',
     isNewProduct: true,
-    isFeatured: true,
-    discount: 0,
+    specialFeature: [],
     images: ['macbook_air_m1_1.jpg', 'macbook_air_m1_2.jpg', 'macbook_air_m1_3.jpg']
   },
   {
+    _id: 'LAPTOP006',
     brand: 'MSI',
     model: 'Gaming GF63 Thin',
     displayName: 'MSI Gaming GF63 - GTX 1650',
-    cpu: 'Intel Core i5-10500H',
-    ram: '8GB DDR4',
-    storage: '512GB SSD',
-    screen: '15.6 inch Full HD 144Hz',
-    graphics: 'NVIDIA GeForce GTX 1650',
+    cpu: 'INTEL_I5_10500H',
+    ramSize: 'RAM_8GB',
+    ramDetails: '8GB DDR4',
+    storageSize: 'STORAGE_512GB',
+    storageDetails: '512GB SSD',
+    screenSize: 'SCREEN_15_6',
+    screenDetails: '15.6 inch Full HD 144Hz',
+    vga: 'NVIDIA_GTX_1650',
     price: 18990000,
     description: 'Laptop gaming MSI GF63 với card đồ họa rời, màn hình 144Hz.',
-    category: 'laptop',
-    status: 'available',
     isNewProduct: true,
-    isFeatured: true,
-    discount: 10,
+    specialFeature: [],
     images: ['laptop_msi_1_1.jpg', 'laptop_msi_1_2.jpg', 'laptop_msi_1_3.jpg']
   },
   // Used laptops
   {
-    brand: 'Dell',
+    _id: 'LAPTOP007',
+    brand: 'DELL',
     model: 'Latitude 7420',
     displayName: 'Dell Latitude 7420 - Cũ 99%',
-    cpu: 'Intel Core i7-1185G7',
-    ram: '16GB DDR4',
-    storage: '512GB SSD',
-    screen: '14 inch Full HD',
-    graphics: 'Intel Iris Xe Graphics',
+    cpu: 'INTEL_I7_1185G7',
+    ramSize: 'RAM_16GB',
+    ramDetails: '16GB DDR4',
+    storageSize: 'STORAGE_512GB',
+    storageDetails: '512GB SSD',
+    screenSize: 'SCREEN_14',
+    screenDetails: '14 inch Full HD',
+    vga: 'INTEL_IRIS_XE',
     price: 22990000,
     description: 'Laptop Dell Latitude cũ 99%, chất lượng như mới, bảo hành 6 tháng.',
-    category: 'laptop',
-    status: 'available',
     isNewProduct: false,
-    isFeatured: false,
-    discount: 15,
+    specialFeature: [],
     images: ['laptop_dell_used_1.jpg', 'laptop_dell_used_2.jpg', 'laptop_dell_used_3.jpg']
   },
   {
+    _id: 'LAPTOP008',
     brand: 'HP',
     model: 'EliteBook 840 G8',
     displayName: 'HP EliteBook 840 - Cũ 95%',
-    cpu: 'Intel Core i5-1135G7',
-    ram: '16GB DDR4',
-    storage: '256GB SSD',
-    screen: '14 inch Full HD',
-    graphics: 'Intel Iris Xe Graphics',
+    cpu: 'INTEL_I5_1135G7',
+    ramSize: 'RAM_16GB',
+    ramDetails: '16GB DDR4',
+    storageSize: 'STORAGE_256GB',
+    storageDetails: '256GB SSD',
+    screenSize: 'SCREEN_14',
+    screenDetails: '14 inch Full HD',
+    vga: 'INTEL_IRIS_XE',
     price: 19990000,
     description: 'Laptop HP EliteBook cũ 95%, doanh nhân chuyên nghiệp.',
-    category: 'laptop',
-    status: 'available',
     isNewProduct: false,
-    isFeatured: false,
-    discount: 20,
+    specialFeature: [],
     images: ['laptop_hp_used_1.jpg', 'laptop_hp_used_2.jpg', 'laptop_hp_used_3.jpg']
   }
 ];
 
 const samplePrinters = [
   {
-    brand: 'Canon',
-    model: 'PIXMA G2010',
-    name: 'Canon PIXMA G2010',
-    description: 'Máy in phun màu đa năng Canon PIXMA G2010',
-    type: 'inkjet',
-    features: ['Print', 'Copy', 'Scan'],
+    _id: 'PRINTER001',
+    brand: 'CANON',
+    type: 'INKJET',
+    printType: 'Phun màu',
+    description: 'Máy in phun màu đa năng Canon PIXMA G3010',
     price: 3290000,
-    category: 'printer',
-    status: 'available',
     isNewProduct: true,
     isFeatured: true,
     discount: 5,
-    images: ['printer_canon_g2010_1.jpg', 'printer_canon_g2010_2.jpg']
+    images: ['printer_canon_g3010_1.jpg', 'printer_canon_g3010_2.jpg', 'printer_canon_g3010_3.jpg']
   },
   {
+    _id: 'PRINTER002',
     brand: 'HP',
-    model: 'LaserJet Pro M404dn',
-    name: 'HP LaserJet Pro M404dn',
-    description: 'Máy in laser đen trắng HP LaserJet Pro M404dn',
-    type: 'laser',
-    features: ['Print', 'Duplex'],
+    type: 'LASER',
+    printType: 'Laser đen trắng',
+    description: 'Máy in laser đen trắng HP LaserJet Pro M15W',
     price: 5990000,
-    category: 'printer',
-    status: 'available',
     isNewProduct: true,
     isFeatured: true,
     discount: 0,
-    images: ['printer_hp_m404_1.jpg', 'printer_hp_m404_2.jpg']
+    images: ['printer_hp_m15w_1.jpg', 'printer_hp_m15w_2.jpg', 'printer_hp_m15w_3.jpg']
   },
   {
-    brand: 'Brother',
-    model: 'HL-L2321D',
-    name: 'Brother HL-L2321D',
+    _id: 'PRINTER003',
+    brand: 'BROTHER',
+    type: 'LASER',
+    printType: 'Laser đen trắng',
     description: 'Máy in laser đen trắng Brother HL-L2321D',
-    type: 'laser',
-    features: ['Print', 'Duplex'],
     price: 2990000,
-    category: 'printer',
-    status: 'available',
     isNewProduct: true,
     isFeatured: false,
     discount: 8,
-    images: ['printer_brother_l2321d_1.jpg']
+    images: ['printer_brother_l2321d_1.jpg', 'printer_brother_l2321d_2.jpg', 'printer_brother_l2321d_3.jpg']
   },
   {
-    brand: 'Epson',
-    model: 'EcoTank L3210',
-    name: 'Epson EcoTank L3210',
+    _id: 'PRINTER004',
+    brand: 'EPSON',
+    type: 'INKJET',
+    printType: 'Phun màu',
     description: 'Máy in phun màu đa năng Epson EcoTank L3210',
-    type: 'inkjet',
-    features: ['Print', 'Copy', 'Scan'],
     price: 4190000,
-    category: 'printer',
-    status: 'available',
     isNewProduct: true,
     isFeatured: true,
     discount: 12,
-    images: ['printer_epson_l3210_1.jpg', 'printer_epson_l3210_2.jpg']
+    images: ['printer_epson_l3210_1.jpg', 'printer_epson_l3210_2.jpg', 'printer_epson_l3210_3.jpg']
   }
 ];
 
 const sampleServices = [
   {
+    _id: 'SERVICE001',
     name: 'Cài đặt hệ điều hành Windows',
-    type: 'software',
+    type: 'installation',
     description: 'Dịch vụ cài đặt hệ điều hành Windows, driver, phần mềm cơ bản',
-    price: 200000,
-    duration: 120,
+    priceMin: 150000,
+    priceMax: 250000,
     isActive: true,
     isFeatured: true
   },
   {
+    _id: 'SERVICE002',
     name: 'Vệ sinh laptop chuyên nghiệp',
-    type: 'hardware',
+    type: 'maintenance',
     description: 'Vệ sinh laptop, thay keo tản nhiệt, làm sạch quạt tản nhiệt',
-    price: 300000,
-    duration: 90,
+    priceMin: 250000,
+    priceMax: 350000,
     isActive: true,
     isFeatured: true
   },
   {
+    _id: 'SERVICE003',
     name: 'Nâng cấp RAM laptop',
-    type: 'hardware',
+    type: 'installation',
     description: 'Dịch vụ nâng cấp RAM cho laptop, bao gồm RAM và công lắp đặt',
-    price: 150000,
-    duration: 30,
+    priceMin: 100000,
+    priceMax: 200000,
     isActive: true,
     isFeatured: false
   },
   {
+    _id: 'SERVICE004',
     name: 'Thay thế ổ cứng SSD',
-    type: 'hardware',
+    type: 'installation',
     description: 'Thay thế ổ cứng HDD bằng SSD, clone dữ liệu, tối ưu hệ thống',
-    price: 250000,
-    duration: 60,
+    priceMin: 200000,
+    priceMax: 300000,
     isActive: true,
     isFeatured: true
   },
   {
+    _id: 'SERVICE005',
     name: 'Sửa chữa màn hình laptop',
     type: 'repair',
     description: 'Sửa chữa màn hình laptop: thay LCD, sửa bản lề, cáp màn hình',
-    price: 500000,
-    duration: 180,
+    priceMin: 400000,
+    priceMax: 600000,
     isActive: true,
     isFeatured: false
   },
   {
+    _id: 'SERVICE006',
     name: 'Cài đặt phần mềm văn phòng',
-    type: 'software',
+    type: 'installation',
     description: 'Cài đặt bộ Microsoft Office, Adobe Reader, phần mềm cần thiết',
-    price: 100000,
-    duration: 45,
+    priceMin: 50000,
+    priceMax: 150000,
     isActive: true,
     isFeatured: false
   }
@@ -416,14 +422,19 @@ const setupInventory = async () => {
     inventoryItems.push({
       productId: laptop._id,
       productType: 'laptop',
-      productName: laptop.displayName,
-      brand: laptop.brand,
-      model: laptop.model,
-      price: laptop.price,
-      quantity: Math.floor(Math.random() * 50) + 10, // Random stock 10-59
-      minStock: 5,
-      location: 'Kho A',
-      status: 'active'
+      productModel: 'Laptop',
+      currentStock: Math.floor(Math.random() * 50) + 10, // Random stock 10-59
+      availableStock: Math.floor(Math.random() * 50) + 10,
+      minimumStock: 5,
+      maximumStock: 100,
+      reorderLevel: 10,
+      cost: laptop.price * 0.8, // Cost is 80% of selling price
+      location: {
+        warehouse: 'MAIN',
+        shelf: 'A01',
+        position: '001'
+      },
+      status: 'ACTIVE'
     });
   }
   
@@ -432,14 +443,19 @@ const setupInventory = async () => {
     inventoryItems.push({
       productId: printer._id,
       productType: 'printer',
-      productName: printer.name,
-      brand: printer.brand,
-      model: printer.model,
-      price: printer.price,
-      quantity: Math.floor(Math.random() * 30) + 5, // Random stock 5-34
-      minStock: 3,
-      location: 'Kho B',
-      status: 'active'
+      productModel: 'Printer',
+      currentStock: Math.floor(Math.random() * 30) + 5, // Random stock 5-34
+      availableStock: Math.floor(Math.random() * 30) + 5,
+      minimumStock: 3,
+      maximumStock: 50,
+      reorderLevel: 5,
+      cost: printer.price * 0.75, // Cost is 75% of selling price
+      location: {
+        warehouse: 'MAIN',
+        shelf: 'B01',
+        position: '001'
+      },
+      status: 'ACTIVE'
     });
   }
   
@@ -461,83 +477,82 @@ const setupSampleOrders = async () => {
   
   const sampleOrders = [
     {
-      customerInfo: {
-        name: 'Nguyễn Văn A',
-        email: 'nguyenvana@gmail.com',
-        phone: '0123456789',
-        address: '123 Đường ABC, Quận 1, TP.HCM'
-      },
-      items: [
+      _id: 'ORDER001',
+      customerName: 'Nguyễn Văn A',
+      customerEmail: 'nguyenvana@gmail.com',
+      customerPhoneNumber: '0123456789',
+      customerAddress: '123 Đường ABC, Quận 1, TP.HCM',
+      billingMethod: 'bank-transfer',
+      type: 'product',
+      orderItems: [
         {
-          productId: laptops[0]._id,
-          productType: 'laptop',
-          productName: laptops[0].displayName,
-          price: laptops[0].price,
+          itemType: 'laptop',
+          itemId: laptops[0]._id,
+          itemName: laptops[0].displayName,
           quantity: 1,
-          total: laptops[0].price
+          unitPrice: laptops[0].price,
+          totalPrice: laptops[0].price
         }
       ],
-      totalAmount: laptops[0].price,
+      finalPrice: laptops[0].price,
       status: 'confirmed',
-      paymentMethod: 'transfer',
-      paymentStatus: 'paid',
-      assignedTo: staff[0]._id,
-      notes: 'Khách hàng yêu cầu giao hàng trong tuần'
+      processedBy: staff[0]._id,
+      processedAt: new Date(),
+      note: 'Khách hàng yêu cầu giao hàng trong tuần'
     },
     {
-      customerInfo: {
-        name: 'Trần Thị B',
-        email: 'tranthib@gmail.com',
-        phone: '0987654321',
-        address: '456 Đường XYZ, Quận 3, TP.HCM'
-      },
-      items: [
+      _id: 'ORDER002',
+      customerName: 'Trần Thị B',
+      customerEmail: 'tranthib@gmail.com',
+      customerPhoneNumber: '0987654321',
+      customerAddress: '456 Đường XYZ, Quận 3, TP.HCM',
+      billingMethod: 'cash-on-delivery',
+      type: 'product',
+      orderItems: [
         {
-          productId: printers[0]._id,
-          productType: 'printer',
-          productName: printers[0].name,
-          price: printers[0].price,
+          itemType: 'printer',
+          itemId: printers[0]._id,
+          itemName: printers[0].description,
           quantity: 2,
-          total: printers[0].price * 2
+          unitPrice: printers[0].price,
+          totalPrice: printers[0].price * 2
         }
       ],
-      totalAmount: printers[0].price * 2,
+      finalPrice: printers[0].price * 2,
       status: 'pending',
-      paymentMethod: 'cash',
-      paymentStatus: 'pending',
-      notes: 'Đơn hàng mới, chờ xử lý'
+      note: 'Đơn hàng mới, chờ xử lý'
     },
     {
-      customerInfo: {
-        name: 'Lê Văn C',
-        email: 'levanc@gmail.com',
-        phone: '0369258147',
-        address: '789 Đường DEF, Quận 5, TP.HCM'
-      },
-      items: [
+      _id: 'ORDER003',
+      customerName: 'Lê Văn C',
+      customerEmail: 'levanc@gmail.com',
+      customerPhoneNumber: '0369258147',
+      customerAddress: '789 Đường DEF, Quận 5, TP.HCM',
+      billingMethod: 'cash',
+      type: 'mixed',
+      orderItems: [
         {
-          productId: laptops[1]._id,
-          productType: 'laptop',
-          productName: laptops[1].displayName,
-          price: laptops[1].price,
+          itemType: 'laptop',
+          itemId: laptops[1]._id,
+          itemName: laptops[1].displayName,
           quantity: 1,
-          total: laptops[1].price
+          unitPrice: laptops[1].price,
+          totalPrice: laptops[1].price
         },
         {
-          productId: printers[1]._id,
-          productType: 'printer', 
-          productName: printers[1].name,
-          price: printers[1].price,
+          itemType: 'printer',
+          itemId: printers[1]._id,
+          itemName: printers[1].description,
           quantity: 1,
-          total: printers[1].price
+          unitPrice: printers[1].price,
+          totalPrice: printers[1].price
         }
       ],
-      totalAmount: laptops[1].price + printers[1].price,
-      status: 'completed',
-      paymentMethod: 'card',
-      paymentStatus: 'paid',
-      assignedTo: staff[1]._id,
-      notes: 'Đơn hàng đã hoàn thành, khách hàng hài lòng'
+      finalPrice: laptops[1].price + printers[1].price,
+      status: 'delivered',
+      processedBy: staff[1]._id,
+      processedAt: new Date(),
+      note: 'Đơn hàng đã hoàn thành, khách hàng hài lòng'
     }
   ];
   

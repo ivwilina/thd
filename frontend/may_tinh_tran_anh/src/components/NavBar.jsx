@@ -168,6 +168,9 @@ const NavBar = () => {
               <Link to="/services">DỊCH VỤ</Link>
             </li>
             <li>
+              <Link to="/my-service-bookings">LỊCH SỬ ĐẶT DỊCH VỤ</Link>
+            </li>
+            <li>
               <Link to="/services">SỬA LAPTOP TẠI NHÀ</Link>
             </li>
             <li>

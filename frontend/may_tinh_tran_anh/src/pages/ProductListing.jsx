@@ -102,9 +102,19 @@ const ProductListing = () => {
         }
         
         // Format products for display
-        const formattedProducts = response.data?.map(product => 
-          apiService.formatProductForDisplay(product)
-        ) || [];
+        let productsToFormat = [];
+        if (Array.isArray(response)) {
+          productsToFormat = response;
+        } else if (Array.isArray(response.data)) {
+          productsToFormat = response.data;
+        } else {
+          console.warn('⚠️ Unexpected response format:', response);
+          productsToFormat = [];
+        }
+        
+        const formattedProducts = productsToFormat.map(product => {
+          return apiService.formatProductForDisplay(product);
+        });
         
         // Fetch inventory data for products to get real stock info
         console.log('📦 Fetching inventory for', formattedProducts.length, 'products...');

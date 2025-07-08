@@ -1,0 +1,370 @@
+/* ================================================
+   ADMIN REPORTS PAGE - DEDICATED CSS  
+   Thiết kế tương đồng với trang products
+   ================================================ */
+
+/* Container và layout chính */
+.admin-reports-page {
+  --reports-primary: #6c5ce7;
+  --reports-secondary: #2c3e50;
+  --reports-success: #28a745;
+  --reports-warning: #ffc107;
+  --reports-danger: #dc3545;
+  --reports-info: #17a2b8;
+  --reports-light: #f8f9fa;
+  --reports-dark: #343a40;
+  --reports-border: #e9ecef;
+  --reports-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --border-radius: 8px;
+  --border-radius-sm: 6px;
+  
+  width: 100%;
+  min-height: calc(100vh - 60px);
+  background-color: #f9fafb;
+  padding: 20px;
+}
+
+.admin-reports-page h1 {
+  color: var(--reports-dark);
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--reports-border);
+}
+
+/* Header Controls */
+.admin-reports-page .reports-header-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+  background: #fff;
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--reports-shadow);
+}
+
+.admin-reports-page .reports-control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  width: 100%;
+}
+
+.admin-reports-page .reports-type-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  flex: 1;
+}
+
+.admin-reports-page .reports-type-btn {
+  padding: 15px 20px;
+  border: 1px solid var(--reports-border);
+  border-radius: var(--border-radius);
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.admin-reports-page .reports-type-btn:hover {
+  border-color: var(--reports-primary);
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.1);
+}
+
+.admin-reports-page .reports-type-btn.active {
+  background-color: var(--reports-primary);
+  color: white;
+  border-color: var(--reports-primary);
+}
+
+.admin-reports-page .reports-btn-icon {
+  font-size: 1.2rem;
+  min-width: 20px;
+}
+
+.admin-reports-page .reports-btn-label {
+  font-weight: 500;
+}
+
+.admin-reports-page .reports-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-reports-page .reports-filter-group label {
+  color: var(--reports-dark);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.admin-reports-page .reports-date-range-select {
+  padding: 8px 12px;
+  border: 1px solid var(--reports-border);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  color: var(--reports-dark);
+  min-width: 150px;
+}
+
+.admin-reports-page .reports-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.admin-reports-page .reports-btn-primary,
+.admin-reports-page .reports-btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-reports-page .reports-btn-secondary {
+  background-color: var(--reports-light);
+  color: var(--reports-dark);
+  border: 1px solid var(--reports-border);
+}
+
+.admin-reports-page .reports-btn-secondary:hover {
+  background-color: #e9ecef;
+}
+
+.admin-reports-page .reports-btn-primary {
+  background-color: var(--reports-primary);
+  color: white;
+}
+
+.admin-reports-page .reports-btn-primary:hover {
+  background-color: #5a4fcf;
+}
+
+/* Content Area */
+.admin-reports-page .reports-content-area {
+  background: #fff;
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--reports-shadow);
+}
+
+.admin-reports-page .reports-content-area h2 {
+  margin: 0 0 20px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--reports-dark);
+  text-align: center;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--reports-border);
+}
+
+/* Reports Content Section */
+.admin-reports-page .reports-content {
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--reports-shadow);
+  overflow: hidden;
+}
+
+.admin-reports-page .reports-content-title {
+  margin: 0;
+  padding: 20px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--reports-dark);
+  text-align: center;
+  background: var(--reports-light);
+  border-bottom: 1px solid var(--reports-border);
+}
+
+/* Reports Summary Section */
+.admin-reports-page .reports-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  background: #fff;
+}
+
+.admin-reports-page .reports-summary-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--reports-shadow);
+  border-left: 4px solid var(--reports-primary);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.admin-reports-page .reports-summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.admin-reports-page .reports-summary-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--reports-dark);
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.admin-reports-page .reports-summary-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* Reports Chart Section */
+.admin-reports-page .reports-chart {
+  padding: 20px;
+  background: #fff;
+  border-top: 1px solid var(--reports-border);
+}
+
+.admin-reports-page .reports-chart-title {
+  margin: 0 0 20px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--reports-dark);
+}
+
+.admin-reports-page .reports-chart-container {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: var(--border-radius-sm);
+}
+
+.admin-reports-page .reports-chart-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  gap: 15px;
+}
+
+.admin-reports-page .reports-chart-bar:last-child {
+  margin-bottom: 0;
+}
+
+.admin-reports-page .reports-bar-label {
+  min-width: 80px;
+  font-weight: 500;
+  color: var(--reports-dark);
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.admin-reports-page .reports-bar-container {
+  flex: 1;
+  height: 30px;
+  background: rgba(108, 92, 231, 0.1);
+  border-radius: 15px;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-reports-page .reports-bar {
+  height: 100%;
+  border-radius: 15px;
+  transition: width 1s ease;
+  position: relative;
+}
+
+.admin-reports-page .reports-bar-value {
+  min-width: 100px;
+  font-weight: 600;
+  color: var(--reports-dark);
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+/* Footer */
+.admin-reports-page .reports-footer {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--reports-border);
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.admin-reports-page .reports-footer p {
+  margin: 5px 0;
+}
+
+/* Loading State */
+.admin-reports-page .reports-loading {
+  text-align: center;
+  padding: 40px;
+  color: #6c757d;
+  font-size: 1.1rem;
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--reports-shadow);
+}
+
+/* No Data State */
+.admin-reports-page .reports-no-data {
+  text-align: center;
+  padding: 40px;
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--reports-shadow);
+}
+
+.admin-reports-page .reports-no-data p {
+  font-size: 1.1rem;
+  color: #6c757d;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin-reports-page {
+    padding: 10px;
+  }
+  
+  .admin-reports-page .reports-control-row {
+    flex-direction: column;
+  }
+  
+  .admin-reports-page .reports-type-buttons {
+    grid-template-columns: 1fr;
+  }
+  
+  .admin-reports-page .reports-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .admin-reports-page .reports-chart-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .admin-reports-page .reports-bar-label,
+  .admin-reports-page .reports-bar-value {
+    text-align: center;
+    min-width: auto;
+  }
+  
+  .admin-reports-page .reports-actions {
+    justify-content: center;
+  }
+}

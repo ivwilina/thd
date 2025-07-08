@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Test</h1>
+    <button onclick="testAPI()">Test API</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                // Test API endpoint
+                const response = await fetch('http://localhost:3000/api/laptops/new');
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h2>API Response:</h2>
+                    <p>Status: ${response.status}</p>
+                    <p>Data type: ${typeof data}</p>
+                    <p>Has data field: ${data.hasOwnProperty('data')}</p>
+                    <p>Data length: ${data.data ? data.data.length : 'N/A'}</p>
+                    <h3>Sample laptop:</h3>
+                    <pre>${JSON.stringify(data.data ? data.data[0] : data[0], null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

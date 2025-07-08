@@ -1,85 +1,48 @@
 const mongoose = require('mongoose');
+const Laptop = require('./models/Laptop');
+const Printer = require('./models/Printer');
+const Employee = require('./models/Employee');
+const Service = require('./models/Service');
+const Order = require('./models/Order');
+const Inventory = require('./models/Inventory');
 
-// Simple database check script
-async function checkDatabase() {
+mongoose.connect('mongodb://localhost:27017/may_tinh_tran_anh', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+mongoose.connection.once('open', async () => {
+  console.log('Connected to MongoDB');
+  
   try {
-    await mongoose.connect('mongodb://localhost:27017/may_tinh_tran_anh');
-    console.log('✅ Connected to MongoDB');
+    const laptops = await Laptop.find();
+    const printers = await Printer.find();
+    const employees = await Employee.find();
+    const services = await Service.find();
+    const orders = await Order.find();
+    const inventory = await Inventory.find();
     
-    // Get all collections
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log('\n📁 Collections in database:');
-    collections.forEach(col => console.log(`- ${col.name}`));
+    console.log('Database contents:');
+    console.log(`- Laptops: ${laptops.length}`);
+    console.log(`- Printers: ${printers.length}`);
+    console.log(`- Employees: ${employees.length}`);
+    console.log(`- Services: ${services.length}`);
+    console.log(`- Orders: ${orders.length}`);
+    console.log(`- Inventory: ${inventory.length}`);
     
-    // Check each collection count
-    console.log('\n📊 Document counts:');
-    for (const col of collections) {
-      const count = await mongoose.connection.db.collection(col.name).countDocuments();
-      console.log(`- ${col.name}: ${count} documents`);
-    }
-    
-    // Check orders collection specifically
-    console.log('\n🛒 Orders analysis:');
-    const ordersCollection = mongoose.connection.db.collection('orders');
-    const orderStats = await ordersCollection.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-          totalAmount: { $sum: { $toDouble: '$totalAmount' } }
-        }
-      }
-    ]).toArray();
-    
-    orderStats.forEach(stat => {
-      console.log(`- ${stat._id || 'No status'}: ${stat.count} orders, Total: ${stat.totalAmount?.toLocaleString('vi-VN')} VND`);
-    });
-    
-    // Check laptops/printers for inventory
-    console.log('\n💻 Products analysis:');
-    const laptopsCollection = mongoose.connection.db.collection('laptops');
-    const laptopCount = await laptopsCollection.countDocuments();
-    const sampleLaptop = await laptopsCollection.findOne({}, { projection: { name: 1, price: 1, stock: 1 } });
-    console.log(`- Laptops: ${laptopCount} items`);
-    if (sampleLaptop) {
-      console.log(`  Sample: ${sampleLaptop.name}, Price: ${sampleLaptop.price}, Stock: ${sampleLaptop.stock}`);
-    }
-    
-    const printersCollection = mongoose.connection.db.collection('printers');
-    const printerCount = await printersCollection.countDocuments();
-    const samplePrinter = await printersCollection.findOne({}, { projection: { name: 1, price: 1, stock: 1 } });
-    console.log(`- Printers: ${printerCount} items`);
-    if (samplePrinter) {
-      console.log(`  Sample: ${samplePrinter.name}, Price: ${samplePrinter.price}, Stock: ${samplePrinter.stock}`);
-    }
-    
-    // Check inventory collection
-    console.log('\n📦 Inventory analysis:');
-    const inventoryCollection = mongoose.connection.db.collection('inventories');
-    const inventoryCount = await inventoryCollection.countDocuments();
-    console.log(`- Inventory records: ${inventoryCount} items`);
-    
-    if (inventoryCount > 0) {
-      const sampleInventory = await inventoryCollection.findOne({}, { 
-        projection: { 
-          itemCode: 1, 
-          itemName: 1, 
-          currentStock: 1, 
-          category: 1,
-          location: 1,
-          lastUpdated: 1
-        } 
-      });
-      console.log(`  Sample: ${sampleInventory.itemName} (${sampleInventory.itemCode})`);
-      console.log(`    Stock: ${sampleInventory.currentStock}, Location: ${sampleInventory.location}`);
+    if (laptops.length > 0) {
+      console.log('\nFirst laptop sample:');
+      const laptop = laptops[0];
+      console.log('- _id:', laptop._id);
+      console.log('- displayName:', laptop.displayName);
+      console.log('- model:', laptop.model);
+      console.log('- brand:', laptop.brand);
+      console.log('- images:', laptop.images);
     }
     
   } catch (error) {
-    console.error('❌ Database error:', error.message);
-  } finally {
-    await mongoose.connection.close();
-    console.log('\n🔚 Database connection closed');
+    console.error('Error:', error);
   }
-}
-
-checkDatabase();
+  
+  mongoose.connection.close();
+});

@@ -1,61 +1,20 @@
 /* Staff Orders Styles - Scoped to .staff-orders-page to avoid CSS conflicts */
 
 .staff-orders-page {
-  min-height: 100vh;
-  background-color: #f8f9fa;
+  min-height: 100vh !important;
+  background-color: #f8f9fa !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
-/* Staff Navigation Bar */
-.staff-orders-page .staff-navbar {
-  background-color: #343a40;
-  padding: 15px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.staff-orders-page .staff-nav-brand h3 {
-  margin: 0;
-  color: #fff;
-  font-size: 1.2rem;
-}
-
-.staff-orders-page .staff-nav-links {
-  display: flex;
-  gap: 20px;
-}
-
-.staff-orders-page .staff-nav-links a {
-  color: #fff;
-  text-decoration: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  transition: background-color 0.3s;
-  font-weight: 500;
-}
-
-.staff-orders-page .staff-nav-links a:hover {
-  background-color: #495057;
-}
-
-.staff-orders-page .staff-nav-links a.active {
-  background-color: #007bff;
-}
-
-.staff-orders-page .staff-logout-btn {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.3s;
-}
-
-.staff-orders-page .staff-logout-btn:hover {
-  background-color: #c82333;
+/* Container for main content */
+.staff-orders-container {
+  flex: 1 !important;
+  padding: 2rem !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* Main Container */
@@ -66,11 +25,15 @@
 }
 
 .staff-orders-page .staff-orders-container h1 {
-  color: #343a40;
-  margin-bottom: 30px;
-  font-size: 2rem;
-  font-weight: 600;
-  text-align: center;
+  color: #2c3e50 !important;
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 2rem !important;
+  text-align: center !important;
+  background: linear-gradient(45deg, #3498db, #2ecc71) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }
 
 /* Orders Table */
@@ -351,16 +314,6 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .staff-orders-page .staff-navbar {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-
-  .staff-orders-page .staff-nav-links {
-    justify-content: center;
-  }
-
   .staff-orders-page .staff-orders-container {
     padding: 15px;
   }

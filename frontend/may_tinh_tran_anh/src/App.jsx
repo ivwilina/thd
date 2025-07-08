@@ -7,13 +7,16 @@ import ProductListing from './pages/ProductListing'
 import ProductDetail from './pages/ProductDetail'
 import Checkout from './pages/Checkout'
 import ServiceListing from './pages/ServiceListing'
+import ServiceBooking from './pages/ServiceBooking'
+import MyServiceBookings from './pages/MyServiceBookings'
 import Cart from './pages/Cart'
-import AllProducts from './pages/AllProducts'
+import AllProducts from './pages/AllProducts.simple'
 import StaffOrders from './pages/StaffOrders'
 import Login from './pages/Login'
 import './assets/login.css'
 import StaffDashboard from './pages/StaffDashboard'
-import StaffInventory from './pages/StaffInventoryNew'
+import StaffInventory from './pages/StaffInventory'
+import StaffServiceBookings from './pages/StaffServiceBookings'
 import AdminProducts from './pages/AdminProducts'
 import AdminInventory from './pages/AdminInventory'
 import AdminAccounts from './pages/AdminAccounts'
@@ -37,7 +40,9 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/all-products" element={<AllProducts />} />
         <Route path="/search" element={<AllProducts />} />
+        <Route path="/my-service-bookings" element={<MyServiceBookings />} />
         <Route path="/:category" element={<ProductListing />} />
+        <Route path="/service-booking/:serviceId?" element={<ServiceBooking />} />
         
         {/* Routes cho Staff - yêu cầu role 'staff' */}
         <Route 
@@ -61,6 +66,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole="staff">
               <StaffInventory />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/staff/service-bookings" 
+          element={
+            <ProtectedRoute requiredRole="staff">
+              <StaffServiceBookings />
             </ProtectedRoute>
           } 
         />

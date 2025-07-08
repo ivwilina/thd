@@ -62,7 +62,8 @@ class ApiService {
   async getLaptops(params = {}) {
     const queryString = new URLSearchParams(params).toString();
     const res = await this.get(`/laptops${queryString ? `?${queryString}` : ''}`);
-    return Array.isArray(res) ? res : (res.data || []);
+    // Handle both array response and object response with laptops property
+    return Array.isArray(res) ? res : (res.laptops || res.data || []);
   }
 
   // Get laptop by ID
@@ -102,7 +103,8 @@ class ApiService {
   async getPrinters(params = {}) {
     const queryString = new URLSearchParams(params).toString();
     const res = await this.get(`/printers${queryString ? `?${queryString}` : ''}`);
-    return Array.isArray(res) ? res : (res.data || []);
+    // Handle both array response and object response with printers property
+    return Array.isArray(res) ? res : (res.printers || res.data || []);
   }
 
   // Get printer by ID
@@ -267,15 +269,56 @@ class ApiService {
 
   // ========== HELPER METHODS ==========
   
+  // Helper function to format CPU name
+  formatCPUName(cpu) {
+    if (!cpu) return '';
+    
+    const cpuMappings = {
+      'INTEL_I3_1115G4': 'Intel Core i3-1115G4',
+      'INTEL_I5_1135G7': 'Intel Core i5-1135G7',
+      'INTEL_I7_1165G7': 'Intel Core i7-1165G7',
+      'INTEL_I5_10500H': 'Intel Core i5-10500H',
+      'INTEL_I7_1185G7': 'Intel Core i7-1185G7',
+      'AMD_RYZEN5_5500U': 'AMD Ryzen 5 5500U',
+      'APPLE_M1': 'Apple M1',
+    };
+    
+    return cpuMappings[cpu] || cpu.replace(/_/g, ' ');
+  }
+
+  // Helper function to format brand name
+  formatBrandName(brand) {
+    if (!brand) return 'Unknown';
+    
+    const brandMappings = {
+      'DELL': 'Dell',
+      'HP': 'HP',
+      'ASUS': 'Asus',
+      'LENOVO': 'Lenovo',
+      'APPLE': 'Apple',
+      'MSI': 'MSI',
+      'CANON': 'Canon',
+      'EPSON': 'Epson',
+      'BROTHER': 'Brother'
+    };
+    
+    return brandMappings[brand] || brand;
+  }
+
   // Format product data for frontend display
   formatProductForDisplay(product) {
+    if (!product) {
+      console.warn('⚠️ Product is null/undefined');
+      return null;
+    }
+    
     const isLaptop = product.cpu; // Laptops have CPU field
     
     if (isLaptop) {
       return {
         id: product._id,
         name: product.displayName,
-        specs: `${product.cpu?.name || ''} ${product.ramDetails} ${product.storageDetails} ${product.screenDetails}`,
+        specs: `${this.formatCPUName(product.cpu)} ${product.ramDetails} ${product.storageDetails} ${product.screenDetails}`,
         originalPrice: `${product.price.toLocaleString('vi-VN')}đ`,
         discountPrice: product.discount ? 
           `${Math.round(product.price * (1 - product.discount / 100)).toLocaleString('vi-VN')}đ` : 
@@ -284,7 +327,7 @@ class ApiService {
           `${Math.round(product.price * product.discount / 100).toLocaleString('vi-VN')}đ` : '0đ',
         image: product.images?.[0] ? `${BACKEND_BASE_URL}/uploads/${product.images[0]}` : '/placeholder-laptop.jpg',
         discount: product.discount ? `${product.discount}%` : null,
-        brand: product.brand?.name || 'Unknown',
+        brand: this.formatBrandName(product.brand),
         category: 'laptop',
         isNew: product.isNewProduct,
         isFeatured: product.isFeatured
@@ -303,7 +346,7 @@ class ApiService {
           `${Math.round(product.price * product.discount / 100).toLocaleString('vi-VN')}đ` : '0đ',
         image: product.images?.[0] ? `${BACKEND_BASE_URL}/uploads/${product.images[0]}` : '/placeholder-printer.jpg',
         discount: product.discount ? `${product.discount}%` : null,
-        brand: product.brand?.name || 'Unknown',
+        brand: this.formatBrandName(product.brand),
         category: 'printer',
         isNew: product.isNewProduct,
         isFeatured: product.isFeatured
@@ -409,7 +452,64 @@ class ApiService {
   async deleteService(id) {
     return this.delete(`/services/${id}`);
   }
+
+  // ========== ALL PRODUCTS ENDPOINT ==========
+  
+  // Get all products (laptops + printers)
+  async getAllProducts(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const res = await this.get(`/all-products${queryString ? `?${queryString}` : ''}`);
+    return res.products || [];
+  }
+
+  // Search all products
+  async searchAllProducts(query, filters = {}) {
+    const params = { search: query, ...filters };
+    return this.getAllProducts(params);
+  }
+
+  // ========== SERVICE BOOKING ENDPOINTS ==========
+  
+  // Get all service bookings
+  async getServiceBookings(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const res = await this.get(`/service-bookings${queryString ? `?${queryString}` : ''}`);
+    return res.bookings || [];
+  }
+
+  // Get service booking by ID
+  async getServiceBookingById(id) {
+    return this.get(`/service-bookings/${id}`);
+  }
+
+  // Create service booking
+  async createServiceBooking(bookingData) {
+    return this.post('/service-bookings', bookingData);
+  }
+
+  // Update service booking
+  async updateServiceBooking(id, bookingData) {
+    return this.put(`/service-bookings/${id}`, bookingData);
+  }
+
+  // Update service booking status
+  async updateServiceBookingStatus(id, status, updates = {}) {
+    return this.put(`/service-bookings/${id}/status`, { status, ...updates });
+  }
+
+  // Delete service booking
+  async deleteServiceBooking(id) {
+    return this.delete(`/service-bookings/${id}`);
+  }
+
+  // Get service booking statistics
+  async getServiceBookingStats() {
+    return this.get('/service-bookings/stats/summary');
+  }
+
+  // ========== PRODUCT MANAGEMENT ==========
 }
+
 
 // Create and export a singleton instance
 const apiService = new ApiService();

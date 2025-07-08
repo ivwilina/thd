@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../assets/serviceListing.css';
 import NavBar from '../components/NavBar';
 import apiService from '../services/apiService';
@@ -15,6 +15,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 const ServiceListing = () => {
+  const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,6 +45,51 @@ const ServiceListing = () => {
         setLoading(true);
         setError(null);
         
+        // Hardcoded services for testing
+        const hardcodedServices = [
+          {
+            id: 'service-1',
+            name: 'Vệ sinh laptop',
+            type: 'maintenance',
+            price: 'Từ 100.000 VNĐ',
+            description: 'Vệ sinh toàn bộ laptop, làm sạch bụi bẩn, thay keo tản nhiệt',
+            isFeatured: true
+          },
+          {
+            id: 'service-2',
+            name: 'Sửa chữa phần cứng',
+            type: 'repair',
+            price: 'Từ 200.000 VNĐ',
+            description: 'Sửa chữa các lỗi phần cứng laptop, thay thế linh kiện',
+            isFeatured: false
+          },
+          {
+            id: 'service-3',
+            name: 'Cài đặt phần mềm',
+            type: 'installation',
+            price: 'Từ 50.000 VNĐ',
+            description: 'Cài đặt hệ điều hành, phần mềm, driver',
+            isFeatured: false
+          },
+          {
+            id: 'service-4',
+            name: 'Tư vấn kỹ thuật',
+            type: 'consultation',
+            price: 'Miễn phí',
+            description: 'Tư vấn về cấu hình máy tính, giải pháp công nghệ',
+            isFeatured: false
+          }
+        ];
+        
+        // Filter by selected type if not 'all'
+        const filteredServices = selectedType === 'all' 
+          ? hardcodedServices 
+          : hardcodedServices.filter(service => service.type === selectedType);
+        
+        setServices(filteredServices);
+        
+        // Keep the original API call as fallback
+        /*
         let response;
         if (selectedType === 'all') {
           response = await apiService.getServices();
@@ -56,6 +102,7 @@ const ServiceListing = () => {
         ) || [];
         
         setServices(formattedServices);
+        */
       } catch (err) {
         console.error('Error fetching services:', err);
         setError('Không thể tải danh sách dịch vụ. Vui lòng thử lại sau.');
@@ -138,7 +185,7 @@ const ServiceListing = () => {
                     </h2>
                     <div className="service-grid">
                       {groupedServices[type].map(service => (
-                        <ServiceCard key={service.id} service={service} />
+                        <ServiceCard key={service.id} service={service} navigate={navigate} />
                       ))}
                     </div>
                   </div>
@@ -147,7 +194,7 @@ const ServiceListing = () => {
                 // Show services in grid when filtered by type
                 <div className="service-grid">
                   {services.map(service => (
-                    <ServiceCard key={service.id} service={service} />
+                    <ServiceCard key={service.id} service={service} navigate={navigate} />
                   ))}
                 </div>
               )}
@@ -160,7 +207,13 @@ const ServiceListing = () => {
 };
 
 // Service Card Component
-const ServiceCard = ({ service }) => {
+const ServiceCard = ({ service, navigate }) => {
+  const handleBookService = () => {
+    navigate('/service-booking', { 
+      state: { service } 
+    });
+  };
+
   return (
     <div className="service-card">
       {service.isFeatured && (
@@ -198,7 +251,7 @@ const ServiceCard = ({ service }) => {
         <button className="btn-contact">
           Liên hệ tư vấn
         </button>
-        <button className="btn-book">
+        <button className="btn-book" onClick={handleBookService}>
           Đặt lịch
         </button>
       </div>

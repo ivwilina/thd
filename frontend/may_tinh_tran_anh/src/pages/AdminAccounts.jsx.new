@@ -1,0 +1,801 @@
+import React, { useState, useEffect } from 'react';
+import AdminNavBar from '../components/AdminNavBar';
+import apiService from '../services/apiService';
+import '../assets/unifiedAdminStaff.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faSearch,
+  faFilter,
+  faUserPlus,
+  faUserEdit,
+  faUserTimes,
+  faSync,
+  faExclamationTriangle,
+  faCheckCircle,
+  faTimesCircle,
+  faUser,
+  faUserShield,
+  faUserCog,
+  faLock,
+  faUnlock,
+  faIdCard
+} from '@fortawesome/free-solid-svg-icons';
+
+const AdminAccounts = () => {
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editingAccount, setEditingAccount] = useState(null);
+  const [accountToDelete, setAccountToDelete] = useState(null);
+  const [formData, setFormData] = useState({
+    _id: '',
+    name: '',
+    email: '',
+    phoneNumber: '',
+    address: '',
+    username: '',
+    password: '',
+    role: 'staff',
+    isActive: true,
+    permissions: {
+      canManageProducts: false,
+      canManageOrders: false,
+      canManageEmployees: false,
+      canManageServices: false,
+      canViewReports: false,
+      canManageCustomers: false
+    }
+  });
+
+  // Load accounts on component mount
+  useEffect(() => {
+    loadAccounts();
+  }, []);
+
+  const loadAccounts = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getEmployees();
+      const data = Array.isArray(response) ? response : (response.data || []);
+      setAccounts(data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to load accounts:', err);
+      setError('Không thể tải danh sách tài khoản');
+      // Set some sample data for demonstration
+      setAccounts([
+        {
+          _id: 'ADM001',
+          name: 'Nguyễn Văn Admin',
+          email: 'admin@example.com',
+          phoneNumber: '0912345678',
+          address: 'Hà Nội',
+          username: 'admin',
+          role: 'admin',
+          isActive: true,
+          permissions: {
+            canManageProducts: true,
+            canManageOrders: true,
+            canManageEmployees: true,
+            canManageServices: true,
+            canViewReports: true,
+            canManageCustomers: true
+          }
+        },
+        {
+          _id: 'MGR001',
+          name: 'Trần Thị Manager',
+          email: 'manager@example.com',
+          phoneNumber: '0923456789',
+          address: 'Hồ Chí Minh',
+          username: 'manager',
+          role: 'manager',
+          isActive: true,
+          permissions: {
+            canManageProducts: true,
+            canManageOrders: true,
+            canManageEmployees: false,
+            canManageServices: true,
+            canViewReports: true,
+            canManageCustomers: true
+          }
+        },
+        {
+          _id: 'STF001',
+          name: 'Lê Văn Staff',
+          email: 'staff@example.com',
+          phoneNumber: '0934567890',
+          address: 'Đà Nẵng',
+          username: 'staff',
+          role: 'staff',
+          isActive: true,
+          permissions: {
+            canManageProducts: false,
+            canManageOrders: true,
+            canManageEmployees: false,
+            canManageServices: false,
+            canViewReports: false,
+            canManageCustomers: true
+          }
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddAccount = () => {
+    setFormData({
+      _id: '',
+      name: '',
+      email: '',
+      phoneNumber: '',
+      address: '',
+      username: '',
+      password: '',
+      role: 'staff',
+      isActive: true,
+      permissions: {
+        canManageProducts: false,
+        canManageOrders: true,
+        canManageEmployees: false,
+        canManageServices: false,
+        canViewReports: false,
+        canManageCustomers: true
+      }
+    });
+    setEditingAccount(null);
+    setShowAddModal(true);
+  };
+
+  const handleEditAccount = (account) => {
+    setFormData({
+      ...account,
+      password: '' // Don't show the password in the form
+    });
+    setEditingAccount(account);
+    setShowEditModal(true);
+  };
+
+  const confirmDeleteAccount = (account) => {
+    setAccountToDelete(account);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!accountToDelete) return;
+
+    try {
+      await apiService.deleteEmployee(accountToDelete._id);
+      setSuccess('Xóa tài khoản thành công!');
+      setTimeout(() => setSuccess(null), 3000);
+      await loadAccounts(); // Reload the list
+      setShowDeleteModal(false);
+      setAccountToDelete(null);
+    } catch (err) {
+      console.error('Failed to delete account:', err);
+      setError('Lỗi khi xóa tài khoản: ' + (err.message || 'Không xác định'));
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    
+    if (name.startsWith('permission.')) {
+      const permissionName = name.split('.')[1];
+      setFormData({
+        ...formData,
+        permissions: {
+          ...formData.permissions,
+          [permissionName]: checked
+        }
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: type === 'checkbox' ? checked : value
+      });
+    }
+  };
+
+  const handleRoleChange = (e) => {
+    const role = e.target.value;
+    let permissions = { ...formData.permissions };
+    
+    // Set default permissions based on role
+    switch (role) {
+      case 'admin':
+        permissions = {
+          canManageProducts: true,
+          canManageOrders: true,
+          canManageEmployees: true,
+          canManageServices: true,
+          canViewReports: true,
+          canManageCustomers: true
+        };
+        break;
+      case 'manager':
+        permissions = {
+          canManageProducts: true,
+          canManageOrders: true,
+          canManageEmployees: false,
+          canManageServices: true,
+          canViewReports: true,
+          canManageCustomers: true
+        };
+        break;
+      case 'staff':
+        permissions = {
+          canManageProducts: false,
+          canManageOrders: true,
+          canManageEmployees: false,
+          canManageServices: false,
+          canViewReports: false,
+          canManageCustomers: true
+        };
+        break;
+      default:
+        break;
+    }
+    
+    setFormData({
+      ...formData,
+      role,
+      permissions
+    });
+  };
+
+  const validateForm = () => {
+    if (!formData.name) return 'Tên nhân viên không được để trống';
+    if (!formData.email) return 'Email không được để trống';
+    if (!formData.phoneNumber) return 'Số điện thoại không được để trống';
+    if (!formData.username) return 'Tên đăng nhập không được để trống';
+    if (!editingAccount && !formData.password) return 'Mật khẩu không được để trống';
+    if (formData.password && formData.password.length < 6) return 'Mật khẩu phải có ít nhất 6 ký tự';
+    
+    return null;
+  };
+
+  const generateEmployeeId = () => {
+    const role = formData.role.toUpperCase().substring(0, 3);
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `${role}${randomNum}`;
+  };
+
+  const handleSaveAccount = async () => {
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    try {
+      const accountData = { ...formData };
+      
+      // If this is a new account, generate an ID
+      if (!editingAccount) {
+        accountData._id = generateEmployeeId();
+      }
+      
+      // Only include password if it's set
+      if (!accountData.password) {
+        delete accountData.password;
+      }
+
+      if (editingAccount) {
+        // Update existing account
+        await apiService.updateEmployee(editingAccount._id, accountData);
+        setSuccess('Cập nhật tài khoản thành công!');
+      } else {
+        // Create new account
+        await apiService.createEmployee(accountData);
+        setSuccess('Thêm tài khoản mới thành công!');
+      }
+      
+      setTimeout(() => setSuccess(null), 3000);
+      setShowAddModal(false);
+      setShowEditModal(false);
+      setEditingAccount(null);
+      await loadAccounts();
+    } catch (err) {
+      console.error('Failed to save account:', err);
+      setError('Lỗi khi lưu tài khoản: ' + (err.message || 'Không xác định'));
+    }
+  };
+
+  // Filter accounts based on search and role
+  const getFilteredAccounts = () => {
+    return accounts.filter(account => {
+      const matchesSearch = !searchTerm || 
+        (account.name && account.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (account.email && account.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (account._id && account._id.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (account.username && account.username.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesRole = roleFilter === 'all' || account.role === roleFilter;
+      
+      return matchesSearch && matchesRole;
+    });
+  };
+
+  const filteredAccounts = getFilteredAccounts();
+
+  const getRoleIcon = (role) => {
+    switch (role) {
+      case 'admin':
+        return <FontAwesomeIcon icon={faUserShield} />;
+      case 'manager':
+        return <FontAwesomeIcon icon={faUserCog} />;
+      case 'staff':
+        return <FontAwesomeIcon icon={faUser} />;
+      default:
+        return <FontAwesomeIcon icon={faUser} />;
+    }
+  };
+
+  const getRoleText = (role) => {
+    switch (role) {
+      case 'admin':
+        return 'Quản trị viên';
+      case 'manager':
+        return 'Quản lý';
+      case 'staff':
+        return 'Nhân viên';
+      default:
+        return role;
+    }
+  };
+
+  const renderAccountsTable = () => (
+    <table className="admin-table">
+      <thead>
+        <tr>
+          <th style={{ width: '5%' }}>#</th>
+          <th style={{ width: '10%' }}>Mã NV</th>
+          <th style={{ width: '20%' }}>Họ tên</th>
+          <th style={{ width: '15%' }}>Email</th>
+          <th style={{ width: '10%' }}>Điện thoại</th>
+          <th style={{ width: '10%' }}>Tài khoản</th>
+          <th style={{ width: '10%' }}>Vai trò</th>
+          <th style={{ width: '5%' }}>Trạng thái</th>
+          <th style={{ width: '15%' }}>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {filteredAccounts.map((account, index) => (
+          <tr key={account._id || index}>
+            <td>{index + 1}</td>
+            <td>
+              <span className="employee-id">
+                <FontAwesomeIcon icon={faIdCard} /> {account._id}
+              </span>
+            </td>
+            <td className="employee-name">
+              <div className="employee-info">
+                <div className="avatar-placeholder">
+                  {getRoleIcon(account.role)}
+                </div>
+                <div>
+                  <div className="employee-fullname">{account.name}</div>
+                  <div className="employee-address">{account.address}</div>
+                </div>
+              </div>
+            </td>
+            <td>{account.email}</td>
+            <td>{account.phoneNumber}</td>
+            <td>{account.username}</td>
+            <td>
+              <span className={`role-badge ${account.role}`}>
+                {getRoleIcon(account.role)} {getRoleText(account.role)}
+              </span>
+            </td>
+            <td>
+              <span className={`status-badge ${account.isActive ? 'in-stock' : 'out-of-stock'}`}>
+                {account.isActive ? (
+                  <><FontAwesomeIcon icon={faUnlock} /> Hoạt động</>
+                ) : (
+                  <><FontAwesomeIcon icon={faLock} /> Khóa</>
+                )}
+              </span>
+            </td>
+            <td>
+              <div className="action-buttons">
+                <button 
+                  className="edit-btn" 
+                  onClick={() => handleEditAccount(account)}
+                  title="Sửa"
+                >
+                  <FontAwesomeIcon icon={faUserEdit} />
+                </button>
+                <button 
+                  className="delete-btn" 
+                  onClick={() => confirmDeleteAccount(account)}
+                  title="Xóa"
+                  disabled={account.role === 'admin'} // Prevent deleting admin accounts
+                >
+                  <FontAwesomeIcon icon={faUserTimes} />
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  const renderAccountForm = () => {
+    const isEditing = !!editingAccount;
+    
+    return (
+      <div className="account-form">
+        <div className="form-row">
+          <div className="form-group">
+            <label>Họ tên:</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="Nhập họ tên nhân viên"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Email:</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="Nhập email"
+              required
+            />
+          </div>
+        </div>
+        
+        <div className="form-row">
+          <div className="form-group">
+            <label>Số điện thoại:</label>
+            <input
+              type="text"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleInputChange}
+              placeholder="Nhập số điện thoại"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Địa chỉ:</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              placeholder="Nhập địa chỉ"
+              required
+            />
+          </div>
+        </div>
+        
+        <div className="form-row">
+          <div className="form-group">
+            <label>Tên đăng nhập:</label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              placeholder="Nhập tên đăng nhập"
+              disabled={isEditing} // Can't change username when editing
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Mật khẩu {isEditing ? '(để trống nếu không thay đổi)' : ''}:</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder={isEditing ? "Nhập mật khẩu mới nếu muốn thay đổi" : "Nhập mật khẩu"}
+              required={!isEditing}
+            />
+          </div>
+        </div>
+        
+        <div className="form-row">
+          <div className="form-group">
+            <label>Vai trò:</label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleRoleChange}
+              required
+            >
+              <option value="staff">Nhân viên</option>
+              <option value="manager">Quản lý</option>
+              <option value="admin">Quản trị viên</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Trạng thái:</label>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                name="isActive"
+                checked={formData.isActive}
+                onChange={handleInputChange}
+                id="isActive"
+              />
+              <label htmlFor="isActive">Hoạt động</label>
+            </div>
+          </div>
+        </div>
+        
+        <div className="form-section">
+          <h3>Quyền hạn</h3>
+          <div className="permissions-grid">
+            <div className="permission-item">
+              <input
+                type="checkbox"
+                id="canManageProducts"
+                name="permission.canManageProducts"
+                checked={formData.permissions.canManageProducts}
+                onChange={handleInputChange}
+              />
+              <label htmlFor="canManageProducts">Quản lý sản phẩm</label>
+            </div>
+            
+            <div className="permission-item">
+              <input
+                type="checkbox"
+                id="canManageOrders"
+                name="permission.canManageOrders"
+                checked={formData.permissions.canManageOrders}
+                onChange={handleInputChange}
+              />
+              <label htmlFor="canManageOrders">Quản lý đơn hàng</label>
+            </div>
+            
+            <div className="permission-item">
+              <input
+                type="checkbox"
+                id="canManageServices"
+                name="permission.canManageServices"
+                checked={formData.permissions.canManageServices}
+                onChange={handleInputChange}
+              />
+              <label htmlFor="canManageServices">Quản lý dịch vụ</label>
+            </div>
+            
+            <div className="permission-item">
+              <input
+                type="checkbox"
+                id="canManageEmployees"
+                name="permission.canManageEmployees"
+                checked={formData.permissions.canManageEmployees}
+                onChange={handleInputChange}
+              />
+              <label htmlFor="canManageEmployees">Quản lý nhân viên</label>
+            </div>
+            
+            <div className="permission-item">
+              <input
+                type="checkbox"
+                id="canViewReports"
+                name="permission.canViewReports"
+                checked={formData.permissions.canViewReports}
+                onChange={handleInputChange}
+              />
+              <label htmlFor="canViewReports">Xem báo cáo</label>
+            </div>
+            
+            <div className="permission-item">
+              <input
+                type="checkbox"
+                id="canManageCustomers"
+                name="permission.canManageCustomers"
+                checked={formData.permissions.canManageCustomers}
+                onChange={handleInputChange}
+              />
+              <label htmlFor="canManageCustomers">Quản lý khách hàng</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderAddEditModal = () => {
+    const isEditing = !!editingAccount;
+    const modalTitle = isEditing ? `Chỉnh sửa tài khoản - ${editingAccount.name}` : 'Thêm tài khoản mới';
+    
+    return (
+      <div className={`modal-overlay ${showAddModal || showEditModal ? 'active' : ''}`}>
+        <div className="modal-container large-modal">
+          <div className="modal-header">
+            <h2>{modalTitle}</h2>
+            <button 
+              className="close-button"
+              onClick={() => {
+                setShowAddModal(false);
+                setShowEditModal(false);
+              }}
+            >
+              &times;
+            </button>
+          </div>
+          <div className="modal-body">
+            {renderAccountForm()}
+          </div>
+          <div className="modal-footer">
+            <button 
+              className="cancel-button"
+              onClick={() => {
+                setShowAddModal(false);
+                setShowEditModal(false);
+              }}
+            >
+              Hủy
+            </button>
+            <button 
+              className="save-button"
+              onClick={handleSaveAccount}
+            >
+              {isEditing ? 'Cập nhật' : 'Thêm mới'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDeleteModal = () => {
+    if (!accountToDelete) return null;
+    
+    return (
+      <div className={`modal-overlay ${showDeleteModal ? 'active' : ''}`}>
+        <div className="modal-container delete-modal">
+          <div className="modal-header">
+            <h2>Xác nhận xóa tài khoản</h2>
+            <button 
+              className="close-button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setAccountToDelete(null);
+              }}
+            >
+              &times;
+            </button>
+          </div>
+          <div className="modal-body">
+            <div className="delete-warning">
+              <FontAwesomeIcon icon={faExclamationTriangle} size="2x" />
+              <p>Bạn có chắc chắn muốn xóa tài khoản <strong>{accountToDelete.name}</strong>?</p>
+              <p className="warning-text">Hành động này không thể hoàn tác.</p>
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button 
+              className="cancel-button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setAccountToDelete(null);
+              }}
+            >
+              Hủy
+            </button>
+            <button 
+              className="delete-button"
+              onClick={handleDeleteAccount}
+            >
+              Xóa
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="admin-page">
+      <AdminNavBar />
+      <div className="admin-content">
+        <div className="page-header">
+          <h1>Quản lý tài khoản</h1>
+          
+          {success && (
+            <div className="success-message">
+              <FontAwesomeIcon icon={faCheckCircle} /> {success}
+            </div>
+          )}
+          
+          {error && (
+            <div className="error-message">
+              <FontAwesomeIcon icon={faTimesCircle} /> {error}
+            </div>
+          )}
+        </div>
+        
+        <div className="admin-controls">
+          <div className="search-filter-row">
+            <div className="search-box">
+              <FontAwesomeIcon icon={faSearch} />
+              <input 
+                type="text" 
+                placeholder="Tìm kiếm tài khoản..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="filter-controls">
+              <div className="filter-group">
+                <label><FontAwesomeIcon icon={faFilter} /> Vai trò:</label>
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                >
+                  <option value="all">Tất cả</option>
+                  <option value="admin">Quản trị viên</option>
+                  <option value="manager">Quản lý</option>
+                  <option value="staff">Nhân viên</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div className="admin-actions">
+            <button 
+              className="refresh-button"
+              onClick={loadAccounts}
+              title="Làm mới danh sách"
+            >
+              <FontAwesomeIcon icon={faSync} /> Làm mới
+            </button>
+            <button 
+              className="add-button"
+              onClick={handleAddAccount}
+              title="Thêm tài khoản mới"
+            >
+              <FontAwesomeIcon icon={faUserPlus} /> Thêm tài khoản
+            </button>
+          </div>
+        </div>
+        
+        <div className="admin-table-container">
+          {loading ? (
+            <div className="loading-spinner">
+              <div className="spinner"></div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
+          ) : filteredAccounts.length === 0 ? (
+            <div className="no-accounts">
+              <p>Không tìm thấy tài khoản nào {searchTerm || roleFilter !== 'all' ? 'phù hợp với tìm kiếm' : ''}</p>
+            </div>
+          ) : (
+            <>
+              {renderAccountsTable()}
+              
+              <div className="table-summary">
+                <p>Hiển thị {filteredAccounts.length} / {accounts.length} tài khoản</p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+      
+      {renderAddEditModal()}
+      {renderDeleteModal()}
+    </div>
+  );
+};
+
+export default AdminAccounts;

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Printer } = require('../models/Printer');
+const Printer = require('../models/Printer');
 
 // GET /api/printers - Get all printers with optional filters
 router.get('/', async (req, res) => {
@@ -111,21 +111,6 @@ router.get('/type/:typeId', async (req, res) => {
   }
 });
 
-// GET /api/printers/:id - Get printer by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const printer = await Printer.getPrinter(req.params.id);
-    if (!printer) {
-      return res.status(404).json({ message: 'Printer not found' });
-    }
-    res.json({
-      data: printer
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
 // POST /api/printers - Create new printer
 router.post('/', async (req, res) => {
   try {
@@ -158,6 +143,26 @@ router.delete('/:id', async (req, res) => {
     }
     res.json({ message: 'Printer deleted successfully' });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET /api/printers/:id - Get printer by ID (must be at the end to avoid conflicts)
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const printer = await Printer.getPrinterById(id);
+    
+    if (!printer) {
+      return res.status(404).json({ message: 'Printer not found' });
+    }
+    
+    res.json({
+      data: printer,
+      success: true
+    });
+  } catch (error) {
+    console.error('Error fetching printer:', error);
     res.status(500).json({ message: error.message });
   }
 });

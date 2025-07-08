@@ -52,57 +52,111 @@ const AllProducts = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch both laptops and printers
-        const [laptops, printers] = await Promise.all([
-          apiService.getLaptops(),
-          apiService.getPrinters()
-        ]);
+        let allProducts = [];
         
-        // Format products for display
-        const laptopsFormatted = laptops.map(product => {
-          const formattedProduct = apiService.formatProductForDisplay(product);
-          return {
-            ...formattedProduct,
-            category: 'Laptop',
-            condition: product.isNewProduct ? 'Mới' : 'Cũ',
-            isUsed: !product.isNewProduct,
-            cpu: product.cpu?.name || '',
-            ram: product.ramDetails || '',
-            storage: product.storageDetails || '',
-            screen: product.screenDetails || '',
-            specs: formattedProduct.specs,
-            price: formattedProduct.discountPrice,
-            originalPrice: formattedProduct.originalPrice,
-            image: formattedProduct.image,
-            images: [formattedProduct.image],
-            brand: product.brand?.name || product.brand || 'Unknown',
-            printFeatures: [],
-          };
-        });
+        // Try to use the new unified API first
+        try {
+          const filters = {};
+          
+          // Build search parameters
+          if (searchQuery) {
+            filters.search = searchQuery;
+          }
+          
+          if (selectedFilters.brand.length > 0) {
+            filters.brand = selectedFilters.brand.join(',');
+          }
+          
+          if (selectedFilters.category.length > 0) {
+            filters.category = selectedFilters.category.join(',');
+          }
+          
+          if (selectedFilters.condition.length > 0) {
+            filters.isNewProduct = selectedFilters.condition.includes('Mới');
+          }
+          
+          const allProductsData = await apiService.getAllProducts(filters);
+          
+          // Format products for display
+          allProducts = allProductsData.map(product => {
+            const formattedProduct = apiService.formatProductForDisplay(product);
+            const isLaptop = product.category === 'laptop';
+            
+            return {
+              ...formattedProduct,
+              category: isLaptop ? 'Laptop' : 'Máy In',
+              condition: product.isNewProduct ? 'Mới' : 'Cũ',
+              isUsed: !product.isNewProduct,
+              cpu: isLaptop ? (product.cpu || '') : '',
+              ram: isLaptop ? (product.ramDetails || '') : '',
+              storage: isLaptop ? (product.storageDetails || '') : '',
+              screen: isLaptop ? (product.screenDetails || '') : '',
+              printType: !isLaptop ? (product.printType || '') : '',
+              printFeatures: !isLaptop ? (product.printFeatures || []) : [],
+              specs: formattedProduct.specs,
+              price: formattedProduct.discountPrice,
+              originalPrice: formattedProduct.originalPrice,
+              image: formattedProduct.image,
+              images: [formattedProduct.image],
+              brand: formattedProduct.brand || 'Unknown',
+            };
+          });
+          
+        } catch {
+          console.log('Unified API not available, falling back to separate calls');
+          
+          // Fallback to separate API calls
+          const [laptops, printers] = await Promise.all([
+            apiService.getLaptops(),
+            apiService.getPrinters()
+          ]);
+          
+          // Format products for display
+          const laptopsFormatted = laptops.map(product => {
+            const formattedProduct = apiService.formatProductForDisplay(product);
+            return {
+              ...formattedProduct,
+              category: 'Laptop',
+              condition: product.isNewProduct ? 'Mới' : 'Cũ',
+              isUsed: !product.isNewProduct,
+              cpu: product.cpu || '',
+              ram: product.ramDetails || '',
+              storage: product.storageDetails || '',
+              screen: product.screenDetails || '',
+              specs: formattedProduct.specs,
+              price: formattedProduct.discountPrice,
+              originalPrice: formattedProduct.originalPrice,
+              image: formattedProduct.image,
+              images: [formattedProduct.image],
+              brand: formattedProduct.brand || 'Unknown',
+              printFeatures: [],
+            };
+          });
+          
+          const printersFormatted = printers.map(product => {
+            const formattedProduct = apiService.formatProductForDisplay(product);
+            return {
+              ...formattedProduct,
+              category: 'Máy In',
+              condition: product.isNewProduct ? 'Mới' : 'Cũ',
+              isUsed: !product.isNewProduct,
+              printType: product.printType || '',
+              printFeatures: product.printFeatures || [],
+              specs: formattedProduct.specs,
+              price: formattedProduct.discountPrice,
+              originalPrice: formattedProduct.originalPrice,
+              image: formattedProduct.image,
+              images: [formattedProduct.image],
+              brand: formattedProduct.brand || 'Unknown',
+              cpu: '', ram: '', storage: '', screen: '',
+            };
+          });
+          
+          allProducts = [...laptopsFormatted, ...printersFormatted];
+        }
         
-        const printersFormatted = printers.map(product => {
-          const formattedProduct = apiService.formatProductForDisplay(product);
-          return {
-            ...formattedProduct,
-            category: 'Máy In',
-            condition: product.isNewProduct ? 'Mới' : 'Cũ',
-            isUsed: !product.isNewProduct,
-            printType: product.printType || '',
-            printFeatures: product.printFeatures || [],
-            specs: formattedProduct.specs,
-            price: formattedProduct.discountPrice,
-            originalPrice: formattedProduct.originalPrice,
-            image: formattedProduct.image,
-            images: [formattedProduct.image],
-            brand: product.brand?.name || product.brand || 'Unknown',
-            cpu: '', ram: '', storage: '', screen: '',
-          };
-        });
-        
-        const allProducts = [...laptopsFormatted, ...printersFormatted];
-
         // Lấy brand động
-        const uniqueBrands = Array.from(new Set(allProducts.map(p => p.brand || 'Unknown')));
+        const uniqueBrands = Array.from(new Set(allProducts.map(p => p.brand || 'Unknown'))).filter(brand => brand !== 'Unknown');
         setBrands(uniqueBrands);
         // Lấy features động (cpu, printFeatures, ram, storage, ...)
         const cpuSet = new Set();
@@ -142,7 +196,9 @@ const AllProducts = () => {
         );
         
         setProducts(productsWithInventory);
-      } catch {
+        
+      } catch (error) {
+        console.error('Error fetching products:', error);
         setError('Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.');
       } finally {
         setLoading(false);
@@ -150,7 +206,7 @@ const AllProducts = () => {
     };
 
     fetchAllProducts();
-  }, []);
+  }, [searchQuery, selectedFilters]);
 
   const toggleFilter = (type, value) => {
     setSelectedFilters(prev => {
@@ -214,70 +270,23 @@ const AllProducts = () => {
     return productText.includes(featureLower);
   };
 
-  const searchFilteredProducts = (products) => {
-    if (!searchQuery.trim()) return products;
-    
-    const query = searchQuery.toLowerCase().trim();
-    const searchTerms = query.split(' ').filter(term => term.length > 0);
-    
-    return products.filter(product => {
-      const productText = [
-        product.name,
-        product.specs,
-        product.brand,
-        product.category,
-        product.condition,
-        product.cpu,
-        product.ram,
-        product.storage,
-        product.screen,
-        product.printType,
-        ...(product.printFeatures || []).map(f => f.name || f)
-      ].join(' ').toLowerCase();
-      
-      // Tìm kiếm tất cả các từ khóa
-      return searchTerms.every(term => productText.includes(term));
-    });
-  };
-
   const getFilteredAndSortedProducts = () => {
     let filtered = [...products];
 
-    // Apply search filter
-    filtered = searchFilteredProducts(filtered);
-
-    // Apply category filter
-    if (selectedFilters.category.length > 0) {
-      filtered = filtered.filter(product => 
-        selectedFilters.category.includes(product.category)
-      );
-    }
-
-    // Apply brand filter
-    if (selectedFilters.brand.length > 0) {
-      filtered = filtered.filter(product => 
-        selectedFilters.brand.includes(product.brand)
-      );
-    }
-
-    // Apply price filter
+    // Since we're now using backend filtering for search, brand, category, and condition
+    // We only need to apply client-side filtering for price and features
+    
+    // Apply price filter (client-side for more precise control)
     if (selectedFilters.price.length > 0) {
       filtered = filtered.filter(product => 
         selectedFilters.price.some(range => isPriceInRange(product.price, range))
       );
     }
 
-    // Apply features filter
+    // Apply features filter (client-side for complex feature matching)
     if (selectedFilters.features.length > 0) {
       filtered = filtered.filter(product => 
         selectedFilters.features.some(feature => hasFeature(product, feature))
-      );
-    }
-
-    // Apply condition filter
-    if (selectedFilters.condition.length > 0) {
-      filtered = filtered.filter(product => 
-        selectedFilters.condition.includes(product.condition)
       );
     }
 
@@ -294,6 +303,14 @@ const AllProducts = () => {
         break;
       case 'name-za':
         filtered.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case 'newest':
+        // Sort by new products first, then by creation date if available
+        filtered.sort((a, b) => {
+          if (a.condition === 'Mới' && b.condition !== 'Mới') return -1;
+          if (a.condition !== 'Mới' && b.condition === 'Mới') return 1;
+          return 0;
+        });
         break;
       case 'popularity':
       default:

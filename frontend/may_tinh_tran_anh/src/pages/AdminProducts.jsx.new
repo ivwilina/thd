@@ -1,0 +1,721 @@
+import React, { useEffect, useState } from 'react';
+import AdminNavBar from '../components/AdminNavBar';
+import apiService from '../services/apiService';
+import '../assets/unifiedAdminStaff.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faEdit,
+  faTrashAlt,
+  faPlus,
+  faSearch,
+  faFilter,
+  faLaptop,
+  faPrint,
+  faToolbox,
+  faSync,
+  faExclamationTriangle,
+  faCheckCircle,
+  faTimesCircle,
+  faStar,
+  faInfoCircle,
+  faEye
+} from '@fortawesome/free-solid-svg-icons';
+
+const AdminProducts = () => {
+  const [products, setProducts] = useState({ laptops: [], printers: [], services: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('laptops');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterOptions, setFilterOptions] = useState({
+    brand: '',
+    condition: '',
+    priceRange: '',
+    status: '',
+    featured: ''
+  });
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [laptopsRes, printersRes, servicesRes] = await Promise.all([
+        apiService.getLaptops(),
+        apiService.getPrinters(),
+        apiService.getServices().catch(() => [])
+      ]);
+
+      setProducts({
+        laptops: Array.isArray(laptopsRes) ? laptopsRes : (laptopsRes?.laptops || []),
+        printers: Array.isArray(printersRes) ? printersRes : (printersRes?.printers || []),
+        services: Array.isArray(servicesRes) ? servicesRes : (servicesRes?.services || [])
+      });
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError('Không thể tải danh sách sản phẩm.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmDelete = (product, productType) => {
+    setProductToDelete({ product, productType });
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!productToDelete) return;
+    
+    const { product, productType } = productToDelete;
+    
+    try {
+      switch (productType) {
+        case 'laptops':
+          await apiService.deleteLaptop(product._id);
+          break;
+        case 'printers':
+          await apiService.deletePrinter(product._id);
+          break;
+        case 'services':
+          await apiService.deleteService(product._id);
+          break;
+        default:
+          throw new Error('Unknown product type');
+      }
+      
+      setSuccess('Xóa sản phẩm thành công!');
+      setTimeout(() => setSuccess(null), 3000);
+      
+      // Refresh the product list
+      fetchProducts();
+      setShowDeleteModal(false);
+      setProductToDelete(null);
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      setError('Không thể xóa sản phẩm. ' + err.message);
+    }
+  };
+
+  const handleAddProduct = (productType) => {
+    setEditingProduct(null);
+    setActiveTab(productType);
+    setShowAddModal(true);
+  };
+
+  const handleEditProduct = (product, productType) => {
+    setEditingProduct(product);
+    setActiveTab(productType);
+    setShowEditModal(true);
+  };
+
+  const handleSaveProduct = async (productData, productType) => {
+    try {
+      const isEditing = !!editingProduct;
+      let response;
+
+      switch (productType) {
+        case 'laptops':
+          if (isEditing) {
+            response = await apiService.updateLaptop(editingProduct._id, productData);
+          } else {
+            response = await apiService.createLaptop(productData);
+          }
+          break;
+        case 'printers':
+          if (isEditing) {
+            response = await apiService.updatePrinter(editingProduct._id, productData);
+          } else {
+            response = await apiService.createPrinter(productData);
+          }
+          break;
+        case 'services':
+          if (isEditing) {
+            response = await apiService.updateService(editingProduct._id, productData);
+          } else {
+            response = await apiService.createService(productData);
+          }
+          break;
+        default:
+          throw new Error('Unknown product type');
+      }
+
+      setSuccess(isEditing ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm mới thành công!');
+      setTimeout(() => setSuccess(null), 3000);
+      
+      setShowAddModal(false);
+      setShowEditModal(false);
+      fetchProducts();
+    } catch (err) {
+      console.error('Error saving product:', err);
+      setError('Không thể lưu sản phẩm. ' + err.message);
+    }
+  };
+
+  // Filter products based on search term and filters
+  const getFilteredProducts = () => {
+    let filteredProducts = products[activeTab] || [];
+    
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filteredProducts = filteredProducts.filter(product => {
+        const nameMatch = (product.displayName || product.name || product.description || '').toLowerCase().includes(searchLower);
+        const modelMatch = (product.model || '').toLowerCase().includes(searchLower);
+        const brandMatch = (typeof product.brand === 'string' ? product.brand : (product.brand?.name || '')).toLowerCase().includes(searchLower);
+        const idMatch = product._id?.toLowerCase().includes(searchLower);
+        
+        return nameMatch || modelMatch || brandMatch || idMatch;
+      });
+    }
+    
+    // Apply other filters
+    if (filterOptions.brand) {
+      filteredProducts = filteredProducts.filter(product => {
+        const productBrand = typeof product.brand === 'string' ? product.brand : (product.brand?.name || '');
+        return productBrand.toLowerCase() === filterOptions.brand.toLowerCase();
+      });
+    }
+    
+    if (filterOptions.condition && activeTab !== 'services') {
+      filteredProducts = filteredProducts.filter(product => 
+        product.condition === filterOptions.condition
+      );
+    }
+    
+    if (filterOptions.priceRange) {
+      const [min, max] = filterOptions.priceRange.split('-').map(Number);
+      filteredProducts = filteredProducts.filter(product => 
+        product.price >= min && product.price <= max
+      );
+    }
+
+    if (filterOptions.status && activeTab !== 'services') {
+      filteredProducts = filteredProducts.filter(product => 
+        product.availability === filterOptions.status
+      );
+    }
+
+    if (filterOptions.featured) {
+      if (filterOptions.featured === 'featured') {
+        filteredProducts = filteredProducts.filter(product => product.isFeatured);
+      } else if (filterOptions.featured === 'not-featured') {
+        filteredProducts = filteredProducts.filter(product => !product.isFeatured);
+      }
+    }
+    
+    return filteredProducts;
+  };
+
+  const filteredProducts = getFilteredProducts();
+
+  const getBrands = () => {
+    const brandSet = new Set();
+    const currentProducts = products[activeTab] || [];
+    
+    currentProducts.forEach(product => {
+      const brand = typeof product.brand === 'string' ? product.brand : (product.brand?.name || '');
+      if (brand) brandSet.add(brand);
+    });
+    
+    return Array.from(brandSet);
+  };
+
+  const renderLaptopTable = () => (
+    <table className="admin-table">
+      <thead>
+        <tr>
+          <th style={{ width: '5%' }}>#</th>
+          <th style={{ width: '10%' }}>Mã</th>
+          <th style={{ width: '20%' }}>Tên sản phẩm</th>
+          <th style={{ width: '10%' }}>Thương hiệu</th>
+          <th style={{ width: '10%' }}>CPU</th>
+          <th style={{ width: '10%' }}>Giá (VND)</th>
+          <th style={{ width: '10%' }}>Trạng thái</th>
+          <th style={{ width: '10%' }}>Đặc biệt</th>
+          <th style={{ width: '15%' }}>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {filteredProducts.map((laptop, index) => (
+          <tr key={laptop._id || index}>
+            <td>{index + 1}</td>
+            <td>{laptop._id?.substring(0, 8) || 'N/A'}</td>
+            <td className="product-name">
+              <div className="product-info">
+                {laptop.images && laptop.images.length > 0 ? (
+                  <img 
+                    src={`http://localhost:3000/uploads/${laptop.images[0]}`} 
+                    alt={laptop.displayName} 
+                    className="product-thumbnail" 
+                    onError={(e) => { e.target.src = '/placeholder-laptop.jpg'; }}
+                  />
+                ) : (
+                  <div className="placeholder-thumbnail">
+                    <FontAwesomeIcon icon={faLaptop} />
+                  </div>
+                )}
+                <div>
+                  <div className="product-title">{laptop.displayName || 'Không có tên'}</div>
+                  <div className="product-subtitle">{laptop.model || ''}</div>
+                </div>
+              </div>
+            </td>
+            <td>{typeof laptop.brand === 'string' ? laptop.brand : (laptop.brand?.name || 'N/A')}</td>
+            <td>{laptop.cpu || 'N/A'}</td>
+            <td>{laptop.price ? laptop.price.toLocaleString('vi-VN') : 'N/A'}</td>
+            <td>
+              <span className={`status-badge ${laptop.availability === 'in-stock' ? 'in-stock' : 
+                               laptop.availability === 'out-of-stock' ? 'out-of-stock' : 'normal'}`}>
+                {laptop.availability === 'in-stock' ? 'Còn hàng' : 
+                 laptop.availability === 'out-of-stock' ? 'Hết hàng' : 
+                 laptop.availability === 'pre-order' ? 'Đặt trước' : 'N/A'}
+              </span>
+            </td>
+            <td>
+              {laptop.isFeatured ? (
+                <span className="featured-badge">
+                  <FontAwesomeIcon icon={faStar} /> Nổi bật
+                </span>
+              ) : laptop.isNewProduct ? (
+                <span className="new-badge">
+                  <FontAwesomeIcon icon={faCheckCircle} /> Mới
+                </span>
+              ) : null}
+            </td>
+            <td>
+              <div className="action-buttons">
+                <button 
+                  className="edit-btn" 
+                  onClick={() => handleEditProduct(laptop, 'laptops')}
+                  title="Sửa"
+                >
+                  <FontAwesomeIcon icon={faEdit} />
+                </button>
+                <button 
+                  className="view-btn" 
+                  onClick={() => window.open(`/products/${laptop._id}`, '_blank')}
+                  title="Xem"
+                >
+                  <FontAwesomeIcon icon={faEye} />
+                </button>
+                <button 
+                  className="delete-btn" 
+                  onClick={() => confirmDelete(laptop, 'laptops')}
+                  title="Xóa"
+                >
+                  <FontAwesomeIcon icon={faTrashAlt} />
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  const renderPrinterTable = () => (
+    <table className="admin-table">
+      <thead>
+        <tr>
+          <th style={{ width: '5%' }}>#</th>
+          <th style={{ width: '10%' }}>Mã</th>
+          <th style={{ width: '25%' }}>Tên sản phẩm</th>
+          <th style={{ width: '10%' }}>Thương hiệu</th>
+          <th style={{ width: '15%' }}>Loại in</th>
+          <th style={{ width: '10%' }}>Giá (VND)</th>
+          <th style={{ width: '10%' }}>Trạng thái</th>
+          <th style={{ width: '15%' }}>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {filteredProducts.map((printer, index) => (
+          <tr key={printer._id || index}>
+            <td>{index + 1}</td>
+            <td>{printer._id?.substring(0, 8) || 'N/A'}</td>
+            <td className="product-name">
+              <div className="product-info">
+                {printer.images && printer.images.length > 0 ? (
+                  <img 
+                    src={`http://localhost:3000/uploads/${printer.images[0]}`} 
+                    alt={printer.description} 
+                    className="product-thumbnail" 
+                    onError={(e) => { e.target.src = '/placeholder-printer.jpg'; }}
+                  />
+                ) : (
+                  <div className="placeholder-thumbnail">
+                    <FontAwesomeIcon icon={faPrint} />
+                  </div>
+                )}
+                <div>
+                  <div className="product-title">{printer.description || 'Không có tên'}</div>
+                  <div className="product-subtitle">{printer.type || ''}</div>
+                </div>
+              </div>
+            </td>
+            <td>{typeof printer.brand === 'string' ? printer.brand : (printer.brand?.name || 'N/A')}</td>
+            <td>{printer.printType || 'N/A'}</td>
+            <td>{printer.price ? printer.price.toLocaleString('vi-VN') : 'N/A'}</td>
+            <td>
+              <span className={`status-badge ${printer.availability === 'in-stock' ? 'in-stock' : 
+                               printer.availability === 'out-of-stock' ? 'out-of-stock' : 'normal'}`}>
+                {printer.availability === 'in-stock' ? 'Còn hàng' : 
+                 printer.availability === 'out-of-stock' ? 'Hết hàng' : 
+                 printer.availability === 'pre-order' ? 'Đặt trước' : 'N/A'}
+              </span>
+            </td>
+            <td>
+              <div className="action-buttons">
+                <button 
+                  className="edit-btn" 
+                  onClick={() => handleEditProduct(printer, 'printers')}
+                  title="Sửa"
+                >
+                  <FontAwesomeIcon icon={faEdit} />
+                </button>
+                <button 
+                  className="view-btn" 
+                  onClick={() => window.open(`/products/${printer._id}`, '_blank')}
+                  title="Xem"
+                >
+                  <FontAwesomeIcon icon={faEye} />
+                </button>
+                <button 
+                  className="delete-btn" 
+                  onClick={() => confirmDelete(printer, 'printers')}
+                  title="Xóa"
+                >
+                  <FontAwesomeIcon icon={faTrashAlt} />
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  const renderServiceTable = () => (
+    <table className="admin-table">
+      <thead>
+        <tr>
+          <th style={{ width: '5%' }}>#</th>
+          <th style={{ width: '10%' }}>Mã</th>
+          <th style={{ width: '30%' }}>Tên dịch vụ</th>
+          <th style={{ width: '20%' }}>Loại dịch vụ</th>
+          <th style={{ width: '15%' }}>Giá (VND)</th>
+          <th style={{ width: '5%' }}>Trạng thái</th>
+          <th style={{ width: '15%' }}>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {filteredProducts.map((service, index) => (
+          <tr key={service._id || index}>
+            <td>{index + 1}</td>
+            <td>{service._id?.substring(0, 8) || 'N/A'}</td>
+            <td>
+              <div className="service-name">
+                <strong>{service.name || 'Không có tên'}</strong>
+                {service.description && (
+                  <div className="service-description">{service.description}</div>
+                )}
+              </div>
+            </td>
+            <td>{service.type || 'N/A'}</td>
+            <td>
+              {service.priceMin === service.priceMax ?
+                `${service.priceMin?.toLocaleString('vi-VN') || 0}` :
+                `${service.priceMin?.toLocaleString('vi-VN') || 0} - ${service.priceMax?.toLocaleString('vi-VN') || 0}`
+              }
+            </td>
+            <td>
+              <span className={`status-badge ${service.isActive ? 'in-stock' : 'out-of-stock'}`}>
+                {service.isActive ? 'Hoạt động' : 'Không hoạt động'}
+              </span>
+            </td>
+            <td>
+              <div className="action-buttons">
+                <button 
+                  className="edit-btn" 
+                  onClick={() => handleEditProduct(service, 'services')}
+                  title="Sửa"
+                >
+                  <FontAwesomeIcon icon={faEdit} />
+                </button>
+                <button 
+                  className="delete-btn" 
+                  onClick={() => confirmDelete(service, 'services')}
+                  title="Xóa"
+                >
+                  <FontAwesomeIcon icon={faTrashAlt} />
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  const renderAddEditModal = () => {
+    const isEditing = !!editingProduct;
+    const modalTitle = isEditing ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới';
+    
+    // This is a placeholder for the real modal implementation
+    // In a real app, you would create full modal forms for each product type
+    return (
+      <div className={`modal-overlay ${showAddModal || showEditModal ? 'active' : ''}`}>
+        <div className="modal-container">
+          <div className="modal-header">
+            <h2>{modalTitle}</h2>
+            <button 
+              className="close-button"
+              onClick={() => {
+                setShowAddModal(false);
+                setShowEditModal(false);
+              }}
+            >
+              &times;
+            </button>
+          </div>
+          <div className="modal-body">
+            <p className="placeholder-message">
+              <FontAwesomeIcon icon={faInfoCircle} /> Đây là vị trí cho form thêm/sửa sản phẩm. 
+              Form thực tế sẽ bao gồm các trường dữ liệu phù hợp với mô hình {activeTab === 'laptops' ? 'Laptop' : activeTab === 'printers' ? 'Printer' : 'Service'}.
+            </p>
+            {/* Modal form would go here */}
+          </div>
+          <div className="modal-footer">
+            <button 
+              className="cancel-button"
+              onClick={() => {
+                setShowAddModal(false);
+                setShowEditModal(false);
+              }}
+            >
+              Hủy
+            </button>
+            <button 
+              className="save-button"
+              onClick={() => {
+                // This is just a placeholder, would normally save form data
+                setShowAddModal(false);
+                setShowEditModal(false);
+                setSuccess(isEditing ? 'Đã cập nhật sản phẩm thành công!' : 'Đã thêm sản phẩm mới thành công!');
+                setTimeout(() => setSuccess(null), 3000);
+              }}
+            >
+              {isEditing ? 'Cập nhật' : 'Thêm mới'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDeleteModal = () => {
+    if (!productToDelete) return null;
+    
+    const { product, productType } = productToDelete;
+    const productName = productType === 'services' ? 
+      (product.name || 'dịch vụ này') : 
+      (product.displayName || product.description || 'sản phẩm này');
+    
+    return (
+      <div className={`modal-overlay ${showDeleteModal ? 'active' : ''}`}>
+        <div className="modal-container delete-modal">
+          <div className="modal-header">
+            <h2>Xác nhận xóa</h2>
+            <button 
+              className="close-button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setProductToDelete(null);
+              }}
+            >
+              &times;
+            </button>
+          </div>
+          <div className="modal-body">
+            <div className="delete-warning">
+              <FontAwesomeIcon icon={faExclamationTriangle} size="2x" />
+              <p>Bạn có chắc chắn muốn xóa <strong>{productName}</strong>?</p>
+              <p className="warning-text">Hành động này không thể hoàn tác.</p>
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button 
+              className="cancel-button"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setProductToDelete(null);
+              }}
+            >
+              Hủy
+            </button>
+            <button 
+              className="delete-button"
+              onClick={handleDelete}
+            >
+              Xóa
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="admin-page">
+      <AdminNavBar />
+      <div className="admin-content">
+        <div className="page-header">
+          <h1>Quản lý sản phẩm</h1>
+          
+          {success && (
+            <div className="success-message">
+              <FontAwesomeIcon icon={faCheckCircle} /> {success}
+            </div>
+          )}
+          
+          {error && (
+            <div className="error-message">
+              <FontAwesomeIcon icon={faTimesCircle} /> {error}
+            </div>
+          )}
+        </div>
+        
+        <div className="admin-tabs">
+          <button 
+            className={`admin-tab ${activeTab === 'laptops' ? 'active' : ''}`}
+            onClick={() => setActiveTab('laptops')}
+          >
+            <FontAwesomeIcon icon={faLaptop} /> Laptop ({products.laptops.length})
+          </button>
+          <button 
+            className={`admin-tab ${activeTab === 'printers' ? 'active' : ''}`}
+            onClick={() => setActiveTab('printers')}
+          >
+            <FontAwesomeIcon icon={faPrint} /> Máy in ({products.printers.length})
+          </button>
+          <button 
+            className={`admin-tab ${activeTab === 'services' ? 'active' : ''}`}
+            onClick={() => setActiveTab('services')}
+          >
+            <FontAwesomeIcon icon={faToolbox} /> Dịch vụ ({products.services.length})
+          </button>
+        </div>
+        
+        <div className="admin-controls">
+          <div className="search-filter-row">
+            <div className="search-box">
+              <FontAwesomeIcon icon={faSearch} />
+              <input 
+                type="text" 
+                placeholder="Tìm kiếm sản phẩm..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="filter-controls">
+              <div className="filter-group">
+                <label><FontAwesomeIcon icon={faFilter} /> Thương hiệu:</label>
+                <select
+                  value={filterOptions.brand}
+                  onChange={(e) => setFilterOptions({...filterOptions, brand: e.target.value})}
+                >
+                  <option value="">Tất cả</option>
+                  {getBrands().map((brand, idx) => (
+                    <option key={idx} value={brand}>{brand}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {activeTab !== 'services' && (
+                <div className="filter-group">
+                  <label>Trạng thái:</label>
+                  <select
+                    value={filterOptions.status}
+                    onChange={(e) => setFilterOptions({...filterOptions, status: e.target.value})}
+                  >
+                    <option value="">Tất cả</option>
+                    <option value="in-stock">Còn hàng</option>
+                    <option value="out-of-stock">Hết hàng</option>
+                    <option value="pre-order">Đặt trước</option>
+                  </select>
+                </div>
+              )}
+              
+              <div className="filter-group">
+                <label>Đặc biệt:</label>
+                <select
+                  value={filterOptions.featured}
+                  onChange={(e) => setFilterOptions({...filterOptions, featured: e.target.value})}
+                >
+                  <option value="">Tất cả</option>
+                  <option value="featured">Nổi bật</option>
+                  <option value="not-featured">Không nổi bật</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div className="admin-actions">
+            <button 
+              className="refresh-button"
+              onClick={fetchProducts}
+              title="Làm mới danh sách"
+            >
+              <FontAwesomeIcon icon={faSync} /> Làm mới
+            </button>
+            <button 
+              className="add-button"
+              onClick={() => handleAddProduct(activeTab)}
+              title="Thêm sản phẩm mới"
+            >
+              <FontAwesomeIcon icon={faPlus} /> Thêm {activeTab === 'laptops' ? 'Laptop' : activeTab === 'printers' ? 'Máy in' : 'Dịch vụ'}
+            </button>
+          </div>
+        </div>
+        
+        <div className="admin-table-container">
+          {loading ? (
+            <div className="loading-spinner">
+              <div className="spinner"></div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="no-products">
+              <p>Không tìm thấy {activeTab === 'laptops' ? 'laptop' : activeTab === 'printers' ? 'máy in' : 'dịch vụ'} nào {searchTerm ? 'phù hợp với tìm kiếm' : ''}</p>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'laptops' && renderLaptopTable()}
+              {activeTab === 'printers' && renderPrinterTable()}
+              {activeTab === 'services' && renderServiceTable()}
+              
+              <div className="table-summary">
+                <p>Hiển thị {filteredProducts.length} / {products[activeTab]?.length || 0} {activeTab === 'laptops' ? 'laptop' : activeTab === 'printers' ? 'máy in' : 'dịch vụ'}</p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+      
+      {renderAddEditModal()}
+      {renderDeleteModal()}
+    </div>
+  );
+};
+
+export default AdminProducts;
